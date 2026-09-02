@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects | Junha Kim</title>
+<meta name="description" content="TCAD device simulation projects and a machine learning project on semiconductor process data — Junha Kim.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --paper:#fbfbfc;
+    --ink:#16181d;
+    --ink-soft:#5a6069;
+    --muted:#8c929b;
+    --rule:#e3e5e9;
+    --rule-soft:#eef0f3;
+    --uv:#4b3fd4;
+    --uv-wash:#efeefc;
+    --measure:46rem;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",Pretendard,-apple-system,BlinkMacSystemFont,
+      "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    font-size:16.5px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--uv);text-decoration:none;}
+  a:hover{text-decoration:underline;text-underline-offset:3px;}
+  a:focus-visible{outline:2px solid var(--uv);outline-offset:3px;border-radius:2px;}
+
+  /* ---------- nav ---------- */
+
+  .topbar{
+    position:sticky;top:0;z-index:10;
+    background:rgba(251,251,252,.92);
+    backdrop-filter:saturate(180%) blur(8px);
+    border-bottom:1px solid var(--rule);
+  }
+
+  .topbar-inner{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:.85rem 1.5rem;
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:1.75rem;
+  }
+
+  .wordmark{
+    margin-right:1.75rem;
+    font-weight:600;
+    font-size:.95rem;
+    color:var(--ink);
+    letter-spacing:-.01em;
+    white-space:nowrap;
+  }
+  .wordmark:hover{text-decoration:none;}
+
+  .topbar nav{display:flex;gap:1.15rem;overflow-x:auto;scrollbar-width:none;}
+  .topbar nav::-webkit-scrollbar{display:none;}
+
+  .topbar nav a{
+    margin-right:1.15rem;
+    font-size:.85rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    padding-bottom:2px;
+    border-bottom:1.5px solid transparent;
+  }
+  .topbar nav a:hover{color:var(--ink);text-decoration:none;}
+  .topbar nav a:last-child{margin-right:0;}
+  .topbar nav a[aria-current="page"]{color:var(--uv);border-bottom-color:var(--uv);}
+
+  @supports (gap:1rem){
+    .topbar nav a{margin-right:0;}
+    .wordmark{margin-right:0;}
+  }
+
+  /* ---------- layout ---------- */
+
+  .page{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:3.25rem 1.5rem 5rem;
+  }
+
+  .page-head{text-align:center;margin-bottom:3rem;}
+
+  .page-head h1{
+    margin:0;
+    font-size:2rem;
+    font-weight:600;
+    letter-spacing:-.02em;
+  }
+  .page-head p{
+    margin:.6rem auto 0;
+    max-width:32rem;
+    font-size:.98rem;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- project ---------- */
+
+  .project{
+    margin-top:3.25rem;
+    padding-top:2.25rem;
+    border-top:1px solid var(--rule);
+  }
+  .project:first-of-type{margin-top:0;padding-top:0;border-top:0;}
+
+  .project-top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:1rem;
+    flex-wrap:wrap;
+  }
+
+  .kicker{margin:0;font-size:.8rem;color:var(--muted);}
+
+  .status{
+    font-size:.75rem;
+    color:var(--muted);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:.05rem .5rem;
+    white-space:nowrap;
+  }
+  .status.live{color:var(--uv);border-color:var(--uv);}
+
+  .project h2{
+    margin:.25rem 0 0;
+    font-size:1.28rem;
+    font-weight:600;
+    letter-spacing:-.015em;
+    line-height:1.4;
+  }
+  .project h2 .ko{
+    display:block;
+    font-size:.92rem;
+    font-weight:400;
+    color:var(--muted);
+    margin-top:.2rem;
+    letter-spacing:0;
+  }
+
+  .project p.lead{margin:1.1rem 0 0;}
+
+  .meta{
+    list-style:none;
+    margin:1.35rem 0 0;
+    padding:0;
+    border-top:1px solid var(--rule-soft);
+  }
+  .meta li{
+    display:flex;
+    gap:1rem;
+    padding:.6rem 0;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:.92rem;
+  }
+  .meta .k{flex:0 0 8.5rem;color:var(--muted);}
+  .meta .v{color:var(--ink);}
+
+  .tools{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.4rem;
+    margin:1.35rem 0 0;
+    padding:0;
+    list-style:none;
+  }
+  .tools li{
+    font-size:.8rem;
+    color:var(--uv);
+    background:var(--uv-wash);
+    border-radius:2px;
+    padding:.15rem .55rem;
+  }
+
+  .pending{
+    margin:1.35rem 0 0;
+    padding:.85rem 1rem;
+    border:1px dashed var(--rule);
+    font-size:.88rem;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  .more{
+    margin-top:3.25rem;
+    padding:2rem 1rem;
+    border-top:1px solid var(--rule);
+    text-align:center;
+    font-size:.9rem;
+    color:var(--muted);
+  }
+
+  /* ---------- footer ---------- */
+
+  footer{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:1.75rem 1.5rem 3rem;
+    border-top:1px solid var(--rule);
+    font-size:.84rem;
+    color:var(--muted);
+    text-align:center;
+  }
+  footer span + span::before{content:"·";margin:0 .5rem;color:var(--rule);}
+
+  @media (max-width:640px){
+    body{font-size:16px;}
+    .page{padding:2.5rem 1.25rem 3.5rem;}
+    .page-head h1{font-size:1.75rem;}
+    .project h2{font-size:1.15rem;}
+    .topbar-inner{padding:.75rem 1.25rem;gap:1.1rem;}
+    .meta li{display:block;}
+    .meta .k{margin-bottom:.1rem;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;animation:none!important;}
+  }
+
+  @media print{
+    .topbar{display:none;}
+    body{background:#fff;font-size:11pt;}
+    a{color:inherit;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Junha Kim</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="skills.html">Skills</a>
+      <a href="projects.html" aria-current="page">Projects</a>
+      <a href="research.html">Research</a>
+      <a href="activities.html">Activities</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</div>
+
+<main class="page">
+
+  <div class="page-head">
+    <h1>Projects</h1>
+    <p>Device simulation and data-driven projects in semiconductor engineering.</p>
+  </div>
+
+  <!-- ============ 1. Ion implantation angle ============ -->
+  <section class="project">
+    <div class="project-top">
+      <p class="kicker">Sentaurus TCAD · Device Simulation</p>
+      <span class="status">To be updated</span>
+    </div>
+
+    <h2>
+      Ion Implantation Angle Optimization in CMOS
+      <span class="ko">CMOS 소자의 이온주입 각도 최적화</span>
+    </h2>
+
+    <p class="lead">
+      Investigating how the implantation tilt angle shapes the doping profile and, in turn,
+      the electrical behaviour of a CMOS device.
+    </p>
+
+    <ul class="meta">
+      <li><span class="k">Type</span><span class="v">Device simulation</span></li>
+      <li><span class="k">Variable</span><span class="v">Implantation tilt angle</span></li>
+      <li><span class="k">Output</span><span class="v">Doping profile, junction formation, device characteristics</span></li>
+    </ul>
+
+    <ul class="tools">
+      <li>Sentaurus Process</li>
+      <li>Sentaurus Device</li>
+      <li>SVisual</li>
+    </ul>
+
+    <p class="pending">Simulation figures, results and repository link — To be updated</p>
+  </section>
+
+  <!-- ============ 2. High-k / SCE ============ -->
+  <section class="project">
+    <div class="project-top">
+      <p class="kicker">Sentaurus TCAD · Device Simulation</p>
+      <span class="status">To be updated</span>
+    </div>
+
+    <h2>
+      Short Channel Effect Optimization with High-k Gate Dielectrics
+      <span class="ko">High-k 물질 적용을 통한 소자의 SCE 최적화</span>
+    </h2>
+
+    <p class="lead">
+      Comparing SiO<sub>2</sub>, Al<sub>2</sub>O<sub>3</sub> and HfO<sub>2</sub> as gate dielectrics
+      at a fixed physical thickness, and evaluating how the change in gate capacitance affects
+      the transfer characteristics and short channel behaviour.
+    </p>
+
+    <ul class="meta">
+      <li><span class="k">Type</span><span class="v">Device simulation</span></li>
+      <li><span class="k">Dielectrics</span><span class="v">SiO<sub>2</sub> · Al<sub>2</sub>O<sub>3</sub> · HfO<sub>2</sub></span></li>
+      <li><span class="k">Thickness</span><span class="v">5&nbsp;nm (physical, fixed)</span></li>
+      <li><span class="k">Output</span><span class="v">Id–Vg characteristics, SS, DIBL, V<sub>th</sub></span></li>
+    </ul>
+
+    <ul class="tools">
+      <li>Sentaurus Process</li>
+      <li>Sentaurus Device</li>
+      <li>SVisual</li>
+    </ul>
+
+    <p class="pending">Simulation figures, results and repository link — To be updated</p>
+  </section>
+
+  <!-- ============ 3. ML on process data ============ -->
+  <section class="project">
+    <div class="project-top">
+      <p class="kicker">Machine Learning · Coursework Project</p>
+      <span class="status live">In progress · 2026-2</span>
+    </div>
+
+    <h2>
+      Machine Learning on Semiconductor Process Data
+      <span class="ko">반도체 공정 데이터 기반 머신러닝 프로젝트</span>
+    </h2>
+
+    <p class="lead">
+      A course project undertaken alongside Machine Learning in the School of Electronic
+      Engineering at Soongsil University, applying data-driven methods to semiconductor
+      process data.
+    </p>
+
+    <ul class="meta">
+      <li><span class="k">Type</span><span class="v">Coursework project</span></li>
+      <li><span class="k">Term</span><span class="v">2026 Fall semester</span></li>
+      <li><span class="k">Focus</span><span class="v">Semiconductor process data analysis</span></li>
+    </ul>
+
+    <p class="pending">Dataset, approach and results — To be updated</p>
+  </section>
+
+  <p class="more">More projects to be added.</p>
+
+</main>
+
+<footer>
+  <span>Junha Kim · Soongsil University</span><span>2026</span>
+</footer>
+
+</body>
+</html>
