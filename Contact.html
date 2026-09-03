@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact | Junha Kim</title>
+<meta name="description" content="Get in touch with Junha Kim — Chemical Engineering, Soongsil University.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --paper:#fbfbfc;
+    --ink:#16181d;
+    --ink-soft:#5a6069;
+    --muted:#8c929b;
+    --rule:#e3e5e9;
+    --rule-soft:#eef0f3;
+    --uv:#4b3fd4;
+    --uv-wash:#efeefc;
+    --measure:46rem;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",Pretendard,-apple-system,BlinkMacSystemFont,
+      "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    font-size:16.5px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--uv);text-decoration:none;}
+  a:hover{text-decoration:underline;text-underline-offset:3px;}
+  a:focus-visible{outline:2px solid var(--uv);outline-offset:3px;border-radius:2px;}
+
+  /* ---------- nav ---------- */
+
+  .topbar{
+    position:sticky;top:0;z-index:10;
+    background:rgba(251,251,252,.92);
+    backdrop-filter:saturate(180%) blur(8px);
+    border-bottom:1px solid var(--rule);
+  }
+
+  .topbar-inner{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:.85rem 1.5rem;
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:1.75rem;
+  }
+
+  .wordmark{
+    margin-right:1.75rem;
+    font-weight:600;
+    font-size:.95rem;
+    color:var(--ink);
+    letter-spacing:-.01em;
+    white-space:nowrap;
+  }
+  .wordmark:hover{text-decoration:none;}
+
+  .topbar nav{display:flex;gap:1.15rem;overflow-x:auto;scrollbar-width:none;}
+  .topbar nav::-webkit-scrollbar{display:none;}
+
+  .topbar nav a{
+    margin-right:1.15rem;
+    font-size:.85rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    padding-bottom:2px;
+    border-bottom:1.5px solid transparent;
+  }
+  .topbar nav a:hover{color:var(--ink);text-decoration:none;}
+  .topbar nav a:last-child{margin-right:0;}
+  .topbar nav a[aria-current="page"]{color:var(--uv);border-bottom-color:var(--uv);}
+
+  @supports (gap:1rem){
+    .topbar nav a{margin-right:0;}
+    .wordmark{margin-right:0;}
+  }
+
+  /* ---------- layout ---------- */
+
+  .page{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:4.5rem 1.5rem 6rem;
+    text-align:center;
+  }
+
+  h1{
+    margin:0;
+    font-size:2rem;
+    font-weight:600;
+    letter-spacing:-.02em;
+  }
+
+  .invite{
+    margin:1.1rem auto 0;
+    max-width:30rem;
+    color:var(--ink-soft);
+  }
+  .invite .ko{
+    display:block;
+    margin-top:.5rem;
+    font-size:.95rem;
+    color:var(--muted);
+  }
+
+  /* ---------- email ---------- */
+
+  .mail{
+    margin:2.75rem auto 0;
+    max-width:26rem;
+    padding:1.85rem 1.5rem;
+    background:#fff;
+    border:1px solid var(--rule);
+  }
+
+  .mail .label{
+    margin:0;
+    font-size:.78rem;
+    color:var(--muted);
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+
+  .mail a.addr{
+    display:inline-block;
+    margin-top:.5rem;
+    font-size:1.12rem;
+    font-weight:500;
+    word-break:break-all;
+  }
+
+  /* ---------- links ---------- */
+
+  .elsewhere{
+    margin:2.5rem 0 0;
+    padding-top:2rem;
+    border-top:1px solid var(--rule);
+  }
+
+  .elsewhere h2{
+    margin:0 0 1rem;
+    font-size:.82rem;
+    color:var(--muted);
+    font-weight:600;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+
+  .elsewhere ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:1.5rem;
+  }
+  .elsewhere li{margin:0 .75rem;}
+
+  @supports (gap:1rem){
+    .elsewhere li{margin:0;}
+  }
+
+  .elsewhere a{font-size:.95rem;}
+
+  /* ---------- footer ---------- */
+
+  footer{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:1.75rem 1.5rem 3rem;
+    border-top:1px solid var(--rule);
+    font-size:.84rem;
+    color:var(--muted);
+    text-align:center;
+  }
+  footer span + span::before{content:"·";margin:0 .5rem;color:var(--rule);}
+
+  @media (max-width:640px){
+    body{font-size:16px;}
+    .page{padding:3rem 1.25rem 4rem;}
+    h1{font-size:1.75rem;}
+    .topbar-inner{padding:.75rem 1.25rem;gap:1.1rem;}
+    .mail{padding:1.5rem 1.15rem;}
+    .mail a.addr{font-size:1rem;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;animation:none!important;}
+  }
+
+  @media print{
+    .topbar{display:none;}
+    body{background:#fff;font-size:11pt;}
+    a{color:inherit;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Junha Kim</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="skills.html">Skills</a>
+      <a href="projects.html">Projects</a>
+      <a href="research.html">Research</a>
+      <a href="activities.html">Activities</a>
+      <a href="contact.html" aria-current="page">Contact</a>
+    </nav>
+  </div>
+</div>
+
+<main class="page">
+
+  <h1>Contact</h1>
+
+  <p class="invite">
+    If you have any questions about my projects or research topics,
+    please feel free to reach out.
+    <span class="ko">프로젝트 및 연구 주제에 관해 궁금한 점이 있으시다면 편하게 연락 주세요.</span>
+  </p>
+
+  <div class="mail">
+    <p class="label">Email</p>
+    <a class="addr" href="mailto:junhst1021@naver.com">junhst1021@naver.com</a>
+  </div>
+
+  <div class="elsewhere">
+    <h2>Elsewhere</h2>
+    <ul>
+      <li><a href="https://github.com/KJH1021">GitHub</a></li>
+    </ul>
+  </div>
+
+</main>
+
+<footer>
+  <span>Junha Kim · Soongsil University</span><span>2026</span>
+</footer>
+
+</body>
+</html>
