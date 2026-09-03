@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research | Junha Kim</title>
+<meta name="description" content="Undergraduate research at the Functional Nano Electronic Materials Lab and semiconductor packaging process training — Junha Kim.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --paper:#fbfbfc;
+    --ink:#16181d;
+    --ink-soft:#5a6069;
+    --muted:#8c929b;
+    --rule:#e3e5e9;
+    --rule-soft:#eef0f3;
+    --uv:#4b3fd4;
+    --uv-wash:#efeefc;
+    --measure:46rem;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",Pretendard,-apple-system,BlinkMacSystemFont,
+      "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    font-size:16.5px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--uv);text-decoration:none;}
+  a:hover{text-decoration:underline;text-underline-offset:3px;}
+  a:focus-visible{outline:2px solid var(--uv);outline-offset:3px;border-radius:2px;}
+
+  /* ---------- nav ---------- */
+
+  .topbar{
+    position:sticky;top:0;z-index:10;
+    background:rgba(251,251,252,.92);
+    backdrop-filter:saturate(180%) blur(8px);
+    border-bottom:1px solid var(--rule);
+  }
+
+  .topbar-inner{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:.85rem 1.5rem;
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:1.75rem;
+  }
+
+  .wordmark{
+    margin-right:1.75rem;
+    font-weight:600;
+    font-size:.95rem;
+    color:var(--ink);
+    letter-spacing:-.01em;
+    white-space:nowrap;
+  }
+  .wordmark:hover{text-decoration:none;}
+
+  .topbar nav{display:flex;gap:1.15rem;overflow-x:auto;scrollbar-width:none;}
+  .topbar nav::-webkit-scrollbar{display:none;}
+
+  .topbar nav a{
+    margin-right:1.15rem;
+    font-size:.85rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    padding-bottom:2px;
+    border-bottom:1.5px solid transparent;
+  }
+  .topbar nav a:hover{color:var(--ink);text-decoration:none;}
+  .topbar nav a:last-child{margin-right:0;}
+  .topbar nav a[aria-current="page"]{color:var(--uv);border-bottom-color:var(--uv);}
+
+  @supports (gap:1rem){
+    .topbar nav a{margin-right:0;}
+    .wordmark{margin-right:0;}
+  }
+
+  /* ---------- layout ---------- */
+
+  .page{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:3.25rem 1.5rem 5rem;
+  }
+
+  .page-head{text-align:center;margin-bottom:3rem;}
+
+  .page-head h1{
+    margin:0;
+    font-size:2rem;
+    font-weight:600;
+    letter-spacing:-.02em;
+  }
+  .page-head p{
+    margin:.6rem auto 0;
+    max-width:32rem;
+    font-size:.98rem;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- affiliation block ---------- */
+
+  .affil{
+    margin-top:3.25rem;
+    padding-top:2.25rem;
+    border-top:1px solid var(--rule);
+  }
+  .affil:first-of-type{margin-top:0;padding-top:0;border-top:0;}
+
+  .affil-top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:1rem;
+    flex-wrap:wrap;
+  }
+
+  .kicker{margin:0;font-size:.8rem;color:var(--muted);}
+
+  .period{
+    font-size:.8rem;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+
+  .affil h2{
+    margin:.25rem 0 0;
+    font-size:1.28rem;
+    font-weight:600;
+    letter-spacing:-.015em;
+    line-height:1.4;
+  }
+  .affil h2 .ko{
+    display:block;
+    font-size:.92rem;
+    font-weight:400;
+    color:var(--muted);
+    margin-top:.2rem;
+    letter-spacing:0;
+  }
+
+  .affil p.lead{margin:1.1rem 0 0;}
+
+  /* ---------- work items ---------- */
+
+  .work{
+    margin:1.85rem 0 0;
+    padding:0;
+    list-style:none;
+    border-top:1px solid var(--rule-soft);
+  }
+
+  .work > li{
+    padding:1.15rem 0;
+    border-bottom:1px solid var(--rule-soft);
+  }
+
+  .work h3{
+    margin:0;
+    font-size:1rem;
+    font-weight:600;
+  }
+  .work h3 .ko{
+    display:block;
+    font-size:.87rem;
+    font-weight:400;
+    color:var(--muted);
+    margin-top:.1rem;
+  }
+
+  .work p{
+    margin:.5rem 0 0;
+    font-size:.94rem;
+    color:var(--ink-soft);
+  }
+
+  .steps{
+    margin:.75rem 0 0;
+    padding-left:1.1rem;
+    font-size:.93rem;
+    color:var(--ink-soft);
+  }
+  .steps li{margin-top:.35rem;}
+  .steps li:first-child{margin-top:0;}
+
+  .pending{
+    margin:1.35rem 0 0;
+    padding:.85rem 1rem;
+    border:1px dashed var(--rule);
+    font-size:.88rem;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  /* ---------- footer ---------- */
+
+  footer{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:1.75rem 1.5rem 3rem;
+    border-top:1px solid var(--rule);
+    font-size:.84rem;
+    color:var(--muted);
+    text-align:center;
+  }
+  footer span + span::before{content:"·";margin:0 .5rem;color:var(--rule);}
+
+  @media (max-width:640px){
+    body{font-size:16px;}
+    .page{padding:2.5rem 1.25rem 3.5rem;}
+    .page-head h1{font-size:1.75rem;}
+    .affil h2{font-size:1.15rem;}
+    .topbar-inner{padding:.75rem 1.25rem;gap:1.1rem;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;animation:none!important;}
+  }
+
+  @media print{
+    .topbar{display:none;}
+    body{background:#fff;font-size:11pt;}
+    a{color:inherit;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Junha Kim</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="skills.html">Skills</a>
+      <a href="projects.html">Projects</a>
+      <a href="research.html" aria-current="page">Research</a>
+      <a href="activities.html">Activities</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</div>
+
+<main class="page">
+
+  <div class="page-head">
+    <h1>Research</h1>
+    <p>Undergraduate research and hands-on process training in semiconductor fabrication.</p>
+  </div>
+
+  <!-- ============ 1. Lab ============ -->
+  <section class="affil">
+    <div class="affil-top">
+      <p class="kicker">Undergraduate Researcher</p>
+      <span class="period">2026.07 – Present</span>
+    </div>
+
+    <h2>
+      Functional Nano Electronic Materials Lab
+      <span class="ko">기능성나노전자재료 연구실 · 숭실대학교</span>
+    </h2>
+
+    <p class="lead">
+      Working as an undergraduate researcher on functional materials for electronic applications,
+      currently focused on electrorheological fluids.
+    </p>
+
+    <ul class="work">
+      <li>
+        <h3>
+          Electrorheological Fluid
+          <span class="ko">전기유변유체 — 소재 합성 및 ER 효율 측정</span>
+        </h3>
+        <p>
+          Synthesis of electrorheological materials and measurement of their ER efficiency —
+          how the apparent viscosity of the fluid responds to an applied electric field.
+        </p>
+      </li>
+    </ul>
+
+    <p class="pending">Further research topics — To be updated</p>
+  </section>
+
+  <!-- ============ 2. Packaging training ============ -->
+  <section class="affil">
+    <div class="affil-top">
+      <p class="kicker">Semiconductor Packaging Process Training</p>
+      <span class="period">2026.07</span>
+    </div>
+
+    <h2>
+      Regional Semiconductor Research Institute
+      <span class="ko">국립대학 권역별 반도체공동연구소 · 전남대학교–앰코테크놀로지</span>
+    </h2>
+
+    <p class="lead">
+      Hands-on back-end process training at the Chonnam National University–Amkor Technology
+      semiconductor research facility, covering die attach, wire bonding and solder ball processes.
+    </p>
+
+    <ul class="work">
+      <li>
+        <h3>
+          Solder Ball Attach
+          <span class="ko">솔더볼 페이스트 공정</span>
+        </h3>
+        <p>
+          Solder paste process for 400&nbsp;µm Sn-Ag-Cu solder balls on a DDR3 package.
+        </p>
+      </li>
+
+      <li>
+        <h3>
+          Wire Bonding
+          <span class="ko">와이어 본딩 — 0.8&nbsp;mil Cu wire</span>
+        </h3>
+        <p>
+          Die bonding on a PCB substrate using 0.8&nbsp;mil copper wire.
+        </p>
+      </li>
+
+      <li>
+        <h3>
+          Bonder Setup &amp; Calibration
+          <span class="ko">캐필러리 교체 및 장비 캘리브레이션</span>
+        </h3>
+        <ol class="steps">
+          <li>Capillary replacement on the wire bonder</li>
+          <li>USG (ultrasonic generator) calibration</li>
+          <li>Alignment calibration</li>
+        </ol>
+      </li>
+    </ul>
+
+    <p class="pending">Additional process training records — To be updated</p>
+  </section>
+
+</main>
+
+<footer>
+  <span>Junha Kim · Soongsil University</span><span>2026</span>
+</footer>
+
+</body>
+</html>
