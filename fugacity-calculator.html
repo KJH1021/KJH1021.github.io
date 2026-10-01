@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fugacity 계산기</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#68707a;--bd:#dde1e6;--ac:#2b59c3;--ac2:#b4470f;--hi:#eef3ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171b;--card:#1d2127;--tx:#e8eaed;--mut:#98a0aa;--bd:#333a42;--ac:#7aa2ff;--ac2:#ff9a5c;--hi:#232c40}}
+:root[data-theme="dark"]{--bg:#14171b;--card:#1d2127;--tx:#e8eaed;--mut:#98a0aa;--bd:#333a42;--ac:#7aa2ff;--ac2:#ff9a5c;--hi:#232c40}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 -apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 2px}p.sub{margin:0 0 16px;color:var(--mut);font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:14px;margin:0 0 12px;color:var(--mut);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+input:focus,select:focus{outline:2px solid var(--ac);outline-offset:0}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{padding:7px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;cursor:pointer}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.m{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--bd);font-variant-numeric:tabular-nums}
+.m:last-child{border:0}.m span:first-child{color:var(--mut)}
+.big{background:var(--hi);border-radius:8px;padding:8px 10px;margin-top:8px}
+.big .m{border:0;font-weight:600}
+.a1 .big .m span:last-child{color:var(--ac)}.a2 .big .m span:last-child{color:var(--ac2)}.a3 .big .m span:last-child{color:#1f8a5b}
+.warn{font-size:13px;color:var(--ac2);margin:4px 0 0}
+.note{font-size:12.5px;color:var(--mut)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}th{font-weight:600;color:var(--mut);text-align:left;padding:4px 6px;white-space:nowrap}td{padding:3px 4px}td input{min-width:78px}td:first-child{white-space:nowrap;color:var(--mut)}input:disabled{opacity:.7}.tabs{display:flex;gap:6px;margin-bottom:14px}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}</style></head><body><main>
+<h1>Fugacity 계산기</h1>
+<p class="sub">순수 성분: ① Lee/Kesler ② Abbott ③ 포화액체 기준 압축액체 · 2성분 혼합물: 비리얼 식</p>
+<div class="tabs"><button id="tp" class="on" type="button" onclick="showTab(false)">순수 성분 (기체·액체)</button><button id="tb" type="button" onclick="showTab(true)">2성분 혼합물</button></div>
+<section id="pure"><div class="card"><h2>입력</h2>
+<div class="grid">
+<div><label>물질명 (선택)</label><input id="sp" value="CO2"></div>
+<div><label>T (K)</label><input id="T" type="number" step="any" value="423.15"></div>
+<div><label>P (bar)</label><input id="P" type="number" step="any" value="10"></div>
+<div><label>Tc (K)</label><input id="Tc" type="number" step="any" value="304.2"></div>
+<div><label>Pc (bar)</label><input id="Pc" type="number" step="any" value="73.83"></div>
+<div><label>ω (이심인자)</label><input id="w" type="number" step="any" value="0.224"></div>
+<div><label>Psat (bar)</label><input id="Ps" type="number" step="any" placeholder="액체 계산용"></div>
+<div><label>Vc (cm³/mol)</label><input id="Vc" type="number" step="any" placeholder="액체 계산용"></div>
+<div><label>Zc</label><input id="Zc" type="number" step="any" placeholder="액체 계산용"></div>
+<div><label>상 (Lee/Kesler)</label><select id="ph"><option value="vapor">기체 (vapor)</option><option value="liquid">액체 (liquid)</option></select></div>
+</div>
+<div class="row"><button id="ex">예제: CO₂ (기체)</button><button id="ex2">예제: c-Pentane (액체)</button></div>
+<p class="note" style="margin:8px 0 0">Psat·Vc·Zc는 압축액체(포화액체 기준) 계산에만 쓰이며, 비워 두면 기체 계산 두 가지만 표시됩니다.</p></div>
+<div id="out"></div>
+<div class="card"><h2>사용한 식</h2><div class="note">
+<b>Abbott:</b> B⁰ = 0.083 − 0.422/Tr<sup>1.6</sup>, B¹ = 0.139 − 0.172/Tr<sup>4.2</sup>, φ = exp[(B⁰ + ωB¹)·Pr/Tr], f = φP<br>
+<b>Lee/Kesler:</b> φ = φ⁰·(φ¹)<sup>ω</sup>, f = φP. 표를 보간하는 대신 표를 만드는 데 쓰인 Lee-Kesler 상태방정식(단순유체 + 기준유체 n-octane, ω<sub>r</sub>=0.3978)을 직접 풀어 φ⁰, φ¹을 구하므로 Tr·Pr 어디서든 보간 오차 없이 계산됩니다. (표 범위: 0.3 ≤ Tr ≤ 4.0, 0.01 ≤ Pr ≤ 10)<br>
+<b>압축액체(포화액체 기준):</b> φ<sup>sat</sup> = exp[(B⁰ + ωB¹)·P<sup>sat</sup><sub>r</sub>/Tr], V<sup>sat</sup> = Vc·Zc<sup>(1−Tr)^0.2857</sup> (Rackett), f = φ<sup>sat</sup>·P<sup>sat</sup>·exp[V<sup>sat</sup>(P − P<sup>sat</sup>)/RT], R = 83.14 cm³·bar/(mol·K)<br>
+Abbott 식은 낮은~중간 압력(대략 Z가 1에 가까운 영역)에서만 유효합니다.</div></div>
+</section>
+<section id="bin" hidden>
+<div class="card"><h2>혼합물 조건</h2><div class="grid">
+<div><label>T (K)</label><input id="bT" type="number" step="any" value="423.15"></div>
+<div><label>P (bar)</label><input id="bP" type="number" step="any" value="30"></div>
+<div><label>kij</label><input id="bk" type="number" step="any" value="0"></div></div></div>
+<div class="card"><h2>성분 정보</h2><div class="tbl"><table>
+<tr><th></th><th>이름</th><th>몰분율 y</th><th>Tc (K)</th><th>Pc (bar)</th><th>Vc (cm³/mol)</th><th>Zc</th><th>ω</th></tr>
+<tr><td>성분 1</td><td><input id="n1" placeholder="선택"></td><td><input id="y1" type="number" step="any" value="0.35"></td><td><input id="Tc1" type="number" step="any" value="282.3"></td><td><input id="Pc1" type="number" step="any" value="50.4"></td><td><input id="Vc1" type="number" step="any" value="131"></td><td><input id="Zc1" type="number" step="any" value="0.281"></td><td><input id="w1" type="number" step="any" value="0.087"></td></tr>
+<tr><td>성분 2</td><td><input id="n2" placeholder="선택"></td><td><input id="y2" disabled></td><td><input id="Tc2" type="number" step="any" value="365.6"></td><td><input id="Pc2" type="number" step="any" value="46.65"></td><td><input id="Vc2" type="number" step="any" value="188.4"></td><td><input id="Zc2" type="number" step="any" value="0.289"></td><td><input id="w2" type="number" step="any" value="0.14"></td></tr>
+</table></div><p class="note" style="margin:8px 0 0">y₂ = 1 − y₁ 로 자동 계산됩니다.</p></div>
+<div id="bout"></div>
+<div class="card"><h2>사용한 식</h2><div class="note">
+혼합 규칙: Tc<sub>12</sub> = √(Tc₁Tc₂)(1−k<sub>12</sub>), V<sub>c12</sub> = [(V<sub>c1</sub><sup>1/3</sup>+V<sub>c2</sub><sup>1/3</sup>)/2]³, Z<sub>c12</sub> = (Z<sub>c1</sub>+Z<sub>c2</sub>)/2, ω<sub>12</sub> = (ω₁+ω₂)/2, P<sub>c12</sub> = Z<sub>c12</sub>RTc<sub>12</sub>/V<sub>c12</sub><br>
+B<sub>ij</sub> = (RTc<sub>ij</sub>/Pc<sub>ij</sub>)(B⁰ + ω<sub>ij</sub>B¹), δ<sub>12</sub> = 2B<sub>12</sub> − B<sub>11</sub> − B<sub>22</sub><br>
+ln φ̂₁ = (P/RT)(B<sub>11</sub> + y₂²δ<sub>12</sub>), ln φ̂₂ = (P/RT)(B<sub>22</sub> + y₁²δ<sub>12</sub>), f̂ᵢ = yᵢ·φ̂ᵢ·P, R = 83.145 cm³·bar/(mol·K)<br>
+제2 비리얼 계수식은 낮은~중간 압력에서만 유효합니다.</div></div>
+</section>
+</main>
+<script>
+function showTab(b){document.getElementById("pure").hidden=b;document.getElementById("bin").hidden=!b;document.getElementById("tp").classList.toggle("on",!b);document.getElementById("tb").classList.toggle("on",b)}
+</script>
+<script>
+const LK={
+ s:{b1:.1181193,b2:.265728,b3:.15479,b4:.030323,c1:.0236744,c2:.0186984,c3:0,c4:.042724,d1:.155488e-4,d2:.623689e-4,be:.65392,ga:.060167},
+ r:{b1:.2026579,b2:.331511,b3:.027655,b4:.203488,c1:.0313385,c2:.0503618,c3:.016901,c4:.041577,d1:.48736e-4,d2:.0740336e-4,be:1.226,ga:.03754}
+};
+const W_R=0.3978;
+function zeos(k,Tr,Vr){
+  const B=k.b1-k.b2/Tr-k.b3/Tr**2-k.b4/Tr**3, C=k.c1-k.c2/Tr+k.c3/Tr**3, D=k.d1+k.d2/Tr;
+  const e=Math.exp(-k.ga/Vr**2);
+  return 1+B/Vr+C/Vr**2+D/Vr**5+k.c4/(Tr**3*Vr**2)*(k.be+k.ga/Vr**2)*e;
+}
+function lnphiFluid(k,Tr,Pr,phase){
+  const g=v=>Pr*v/Tr-zeos(k,Tr,v);
+  // scan log grid for sign changes
+  const roots=[];let vp=1e-3,gp=g(vp);
+  for(let i=1;i<=4000;i++){
+    const v=1e-3*Math.pow(1e6,i/4000),gv=g(v);
+    if(gp*gv<0){let a=vp,b=v;for(let j=0;j<100;j++){const m=(a+b)/2;(g(a)*g(m)<=0)?b=m:a=m;}roots.push((a+b)/2);}
+    vp=v;gp=gv;
+  }
+  if(!roots.length)return null;
+  const Vr=phase==='liquid'?roots[0]:roots[roots.length-1];
+  const Z=Pr*Vr/Tr;
+  const B=k.b1-k.b2/Tr-k.b3/Tr**2-k.b4/Tr**3, C=k.c1-k.c2/Tr+k.c3/Tr**3, D=k.d1+k.d2/Tr;
+  const E=k.c4/(2*Tr**3*k.ga)*(k.be+1-(k.be+1+k.ga/Vr**2)*Math.exp(-k.ga/Vr**2));
+  return {lnphi:Z-1-Math.log(Z)+B/Vr+C/(2*Vr**2)+D/(5*Vr**5)+E,Z,Vr,nroots:roots.length};
+}
+function leeKesler(Tr,Pr,w,phase){
+  const s=lnphiFluid(LK.s,Tr,Pr,phase), r=lnphiFluid(LK.r,Tr,Pr,phase);
+  if(!s||!r)return null;
+  const lnp1=(r.lnphi-s.lnphi)/W_R;
+  return {phi0:Math.exp(s.lnphi),phi1:Math.exp(lnp1),phi:Math.exp(s.lnphi+w*lnp1),Z0:s.Z,nroots:s.nroots};
+}
+function abbott(Tr,Pr,w){
+  const B0=0.083-0.422/Tr**1.6,B1=0.139-0.172/Tr**4.2;
+  return {B0,B1,phi:Math.exp((B0+w*B1)*Pr/Tr)};
+}
+function liquidSat(T,P,Tc,Pc,w,Psat,Vc,Zc){
+  const Tr=T/Tc,Pr=P/Pc,Prs=Psat/Pc,R=83.14;
+  const B0=0.083-0.422/Tr**1.6,B1=0.139-0.172/Tr**4.2;
+  const phiS=Math.exp((B0+w*B1)*Prs/Tr);
+  const Vsat=Vc*Math.pow(Zc,Math.pow(1-Tr,0.2857));
+  const poy=Math.exp(Vsat*(P-Psat)/R/T);
+  return {Prs,phiS,Vsat,poy,f:phiS*Psat*poy};
+}
+
+function binaryMix(T,P,y1,k,a,b){
+  const R=83.145,y2=1-y1;
+  const vir=(Tc,Pc,w)=>{const Tr=T/Tc;const B0=0.083-0.422/Tr**1.6,B1=0.139-0.172/Tr**4.2;return {Tr,Pr:P/Pc,B0,B1,B:(B0+w*B1)*R*Tc/Pc}};
+  const x={Tc:Math.sqrt(a.Tc*b.Tc)*(1-k),Vc:Math.pow((Math.cbrt(a.Vc)+Math.cbrt(b.Vc))/2,3),Zc:(a.Zc+b.Zc)/2,w:(a.w+b.w)/2};
+  x.Pc=x.Zc*R*x.Tc/x.Vc;
+  const s1=vir(a.Tc,a.Pc,a.w),s2=vir(b.Tc,b.Pc,b.w),s12=vir(x.Tc,x.Pc,x.w);
+  const d12=2*s12.B-s1.B-s2.B,c=P/R/T;
+  const ln1=c*(s1.B+y2*y2*d12),ln2=c*(s2.B+y1*y1*d12);
+  const Bmix=y1*y1*s1.B+2*y1*y2*s12.B+y2*y2*s2.B;
+  return {y2,x,s1,s2,s12,d12,ln1,ln2,phi1:Math.exp(ln1),phi2:Math.exp(ln2),f1:y1*P*Math.exp(ln1),f2:y2*P*Math.exp(ln2),Bmix,Z:1+Bmix*c};
+}
+
+const $=id=>document.getElementById(id);
+const f=(x,d=4)=>isFinite(x)?x.toFixed(d):'—';
+function calc(){
+  const T=+$('T').value,P=+$('P').value,Tc=+$('Tc').value,Pc=+$('Pc').value,w=+$('w').value;
+  const out=$('out');
+  if(![T,P,Tc,Pc].every(v=>v>0)||!isFinite(w)){out.innerHTML='<div class="card note">T, P, Tc, Pc(양수), ω를 입력하세요.</div>';return}
+  const Tr=T/Tc,Pr=P/Pc,ab=abbott(Tr,Pr,w),lk=leeKesler(Tr,Pr,w,$('ph').value);
+  const wr=[];
+  if(Tr<0.3||Tr>4||Pr<0.01||Pr>10)wr.push('Lee/Kesler 표 범위(0.3≤Tr≤4, 0.01≤Pr≤10)를 벗어났습니다.');
+  if(lk&&lk.nroots>1)wr.push('여러 개의 체적근이 존재합니다 (선택한 상의 근 사용).');
+  if(!lk)wr.push('Lee/Kesler 해를 찾지 못했습니다.');
+  if(Pr>1||Tr<0.5)wr.push('Abbott(비리얼) 식은 이 조건에서 부정확할 수 있습니다.');
+  const nm=$('sp').value.trim();
+  let h=`<div class="card"><h2>${nm?nm+' · ':''}Tr = ${f(Tr)}, Pr = ${f(Pr)}</h2><div class="two">
+  <div class="a1"><div class="m"><span>B⁰</span><span>${f(ab.B0)}</span></div><div class="m"><span>B¹</span><span>${f(ab.B1)}</span></div>
+  <div class="big"><div class="m"><span>Abbott φ</span><span>${f(ab.phi,5)}</span></div><div class="m"><span>f (bar)</span><span>${f(ab.phi*P,4)}</span></div></div></div>`;
+  if(lk)h+=`<div class="a2"><div class="m"><span>φ⁰</span><span>${f(lk.phi0)}</span></div><div class="m"><span>φ¹</span><span>${f(lk.phi1)}</span></div>
+  <div class="big"><div class="m"><span>Lee/Kesler φ</span><span>${f(lk.phi,5)}</span></div><div class="m"><span>f (bar)</span><span>${f(lk.phi*P,4)}</span></div></div></div>`;
+  const Ps=+$('Ps').value,Vc=+$('Vc').value,Zc=+$('Zc').value;
+  if(Ps>0&&Vc>0&&Zc>0){
+    if(Tr>=1)wr.push('Tr ≥ 1 이므로 액체 상 계산(Rackett)을 적용할 수 없습니다.');
+    else{const L=liquidSat(T,P,Tc,Pc,w,Ps,Vc,Zc);
+      h+=`<div class="a3"><div class="m"><span>P*r</span><span>${f(L.Prs)}</span></div><div class="m"><span>φ* (포화)</span><span>${f(L.phiS)}</span></div><div class="m"><span>Vsat (cm³/mol)</span><span>${f(L.Vsat,3)}</span></div><div class="m"><span>Poynting 항</span><span>${f(L.poy,4)}</span></div>
+      <div class="big"><div class="m"><span>액체 f (bar)</span><span>${f(L.f,4)}</span></div></div></div>`;
+      if(P<Ps)wr.push('P < Psat 이므로 이 조건에서는 액체가 안정하지 않습니다.');}
+  }
+  h+='</div>';
+  if(lk)h+=`<div class="note" style="margin-top:10px">두 방법의 φ 차이: ${f((ab.phi-lk.phi)/lk.phi*100,3)} %</div>`;
+  wr.forEach(t=>h+=`<p class="warn">⚠ ${t}</p>`);
+  out.innerHTML=h+'</div>';
+}
+['sp','T','P','Tc','Pc','w','ph','Ps','Vc','Zc'].forEach(i=>$(i).addEventListener('input',calc));
+$('ex').onclick=()=>{$('sp').value='CO2';$('T').value=423.15;$('P').value=10;$('Tc').value=304.2;$('Pc').value=73.83;$('w').value=0.224;$('ph').value='vapor';$('Ps').value='';$('Vc').value='';$('Zc').value='';calc()};
+$('ex2').onclick=()=>{$('sp').value='c-Pentane';$('T').value=383.15;$('P').value=275;$('Tc').value=511.8;$('Pc').value=45.02;$('w').value=0.196;$('Ps').value=5.267;$('Vc').value=258;$('Zc').value=0.273;$('ph').value='vapor';calc()};
+calc();
+
+const g=id=>document.getElementById(id);
+function calcB(){
+  const n=id=>+g(id).value,T=n('bT'),P=n('bP'),k=n('bk'),y1=n('y1');
+  const s=i=>({Tc:n('Tc'+i),Pc:n('Pc'+i),Vc:n('Vc'+i),Zc:n('Zc'+i),w:n('w'+i)});
+  const a=s(1),b=s(2),out=g('bout');
+  g('y2').value=(y1>=0&&y1<=1)?(1-y1).toFixed(4):'';
+  const ok=[T,P,a.Tc,a.Pc,a.Vc,a.Zc,b.Tc,b.Pc,b.Vc,b.Zc].every(v=>v>0)&&isFinite(a.w)&&isFinite(b.w)&&isFinite(k)&&y1>=0&&y1<=1;
+  if(!ok){out.innerHTML='<div class="card note">모든 값을 입력하세요 (0 ≤ y₁ ≤ 1, 나머지는 양수).</div>';return}
+  const r=binaryMix(T,P,y1,k,a,b),q=(x,d=4)=>isFinite(x)?x.toFixed(d):'—';
+  const n1=g('n1').value.trim()||'성분 1',n2=g('n2').value.trim()||'성분 2';
+  const cell=(nm,i,ln,phi,f)=>`<div class="${i==1?'a1':'a2'}"><div class="m"><span>${nm} · B<sub>${i}${i}</sub></span><span>${q(i==1?r.s1.B:r.s2.B,2)}</span></div><div class="m"><span>ln φ̂${i}</span><span>${q(ln,5)}</span></div><div class="big"><div class="m"><span>φ̂${i}</span><span>${q(phi,4)}</span></div><div class="m"><span>f̂${i} (bar)</span><span>${q(f,4)}</span></div></div></div>`;
+  let h=`<div class="card"><h2>결과</h2><div class="two">${cell(n1,1,r.ln1,r.phi1,r.f1)}${cell(n2,2,r.ln2,r.phi2,r.f2)}</div></div>
+  <div class="card"><h2>중간 계산값</h2><div class="two"><div>
+  <div class="m"><span>B<sub>12</sub> (cm³/mol)</span><span>${q(r.s12.B,2)}</span></div><div class="m"><span>δ<sub>12</sub> (cm³/mol)</span><span>${q(r.d12,2)}</span></div><div class="m"><span>B<sub>혼합</sub> (cm³/mol)</span><span>${q(r.Bmix,2)}</span></div><div class="m"><span>Z<sub>혼합</sub></span><span>${q(r.Z,4)}</span></div></div><div>
+  <div class="m"><span>Tc<sub>12</sub> (K)</span><span>${q(r.x.Tc,3)}</span></div><div class="m"><span>Pc<sub>12</sub> (bar)</span><span>${q(r.x.Pc,3)}</span></div><div class="m"><span>Vc<sub>12</sub> (cm³/mol)</span><span>${q(r.x.Vc,2)}</span></div><div class="m"><span>Zc<sub>12</sub> · ω<sub>12</sub></span><span>${q(r.x.Zc,4)} · ${q(r.x.w,4)}</span></div></div></div>
+  <div class="tbl" style="margin-top:10px"><table><tr><th></th><th>Tr</th><th>Pr</th><th>B⁰</th><th>B¹</th></tr>
+  ${[['성분 1',r.s1],['성분 2',r.s2],['12',r.s12]].map(([t,o])=>`<tr><td>${t}</td><td>${q(o.Tr)}</td><td>${q(o.Pr)}</td><td>${q(o.B0)}</td><td>${q(o.B1)}</td></tr>`).join('')}</table></div></div>`;
+  const wr=[];
+  if(r.s1.Pr>1||r.s2.Pr>1||r.Z<0.8)wr.push('압력이 높아 비리얼 식(Z < 0.8 부근)의 정확도가 떨어질 수 있습니다.');
+  wr.forEach(t=>h+=`<p class="warn">⚠ ${t}</p>`);
+  out.innerHTML=h;
+}
+document.getElementById('bin').addEventListener('input',calcB);calcB();
+
+</script></body></html>
