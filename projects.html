@@ -403,7 +403,50 @@
     </p>
   </section>
 
-  <!-- ============ 3. ML on process data ============ -->
+  <!-- ============ 3. Gas station pump flow optimization ============ -->
+  <section class="project" id="fluid-pump">
+    <div class="project-top">
+      <p class="kicker">Chemical Engineering Fluid Mechanics · Optimization · MLP</p>
+      <span class="status live">Completed · 2026-06</span>
+    </div>
+
+    <h2>
+      Flow-Rate Optimization of a Gas Station Fuel Pump System
+      <span class="ko">주유소 펌프 시스템의 유속 최적화를 통한 전력 절감</span>
+    </h2>
+
+    <p class="lead">
+      A four-dispenser gas station piping network modeled as a complex piping system with the
+      generalized Bernoulli equation, Fanning friction factors and a sudden-contraction loss.
+      The model was built into a formula-driven Excel calculator and a velocity&ndash;power sweep,
+      which then trained an MLP that maps hourly congestion to the nozzle velocity minimizing a
+      weighted time&ndash;power cost under a 10-minute refueling limit.
+    </p>
+
+    <ul class="meta">
+      <li><span class="k">Type</span><span class="v">Team coursework (4 members), Chemical Engineering Fluid Mechanics</span></li>
+      <li><span class="k">Period</span><span class="v">2026.05 &ndash; 2026.06</span></li>
+      <li><span class="k">System</span><span class="v">UST &rarr; submersible pump &rarr; 2-inch HDPE mains &rarr; 4 dispensers (17&nbsp;mm nozzles)</span></li>
+      <li><span class="k">Model</span><span class="v">Node-based complex piping &middot; GBE &middot; Fanning <i>f</i> (Shacham) &middot; Re per segment</span></li>
+      <li><span class="k">Optimization</span><span class="v">Normalized weighted-sum cost <i>J</i> = <i>w</i>&middot;T&#770; + (1&minus;<i>w</i>)&middot;P&#770; &middot; MLP 1&ndash;50&ndash;50&ndash;1 (ReLU, Adam)</span></li>
+      <li><span class="k">Result</span><span class="v">Nozzle-hose friction is ~84% of the pump work at the current 2.385&nbsp;m/s (465&nbsp;W). Congestion-based velocity control cuts monthly pump electricity per station by 41% (&asymp; &#8361;0.2&nbsp;M/yr), &asymp; &#8361;2.1&nbsp;B/yr if scaled to 10,489 stations nationwide</span></li>
+      <li><span class="k">Caveat</span><span class="v">Branch losses were summed conservatively and only the sudden contraction was included as a minor loss; a variable-speed pump retrofit is required</span></li>
+    </ul>
+
+    <ul class="tools">
+      <li>Excel</li>
+      <li>Python</li>
+      <li>scikit-learn</li>
+      <li>pandas</li>
+      <li>NumPy</li>
+    </ul>
+
+    <p class="lead">
+      <a class="btn-link" href="fluid-pump.html" target="_blank" rel="noopener">View full write-up (한국어) <span aria-hidden="true">↗</span><span class="sr-only">(opens in a new tab)</span></a>
+    </p>
+  </section>
+
+  <!-- ============ 4. ML on process data ============ -->
   <section class="project">
     <div class="project-top">
       <p class="kicker">Machine Learning · Coursework Project</p>
@@ -430,7 +473,7 @@
     <p class="pending">Dataset, approach and results — To be updated</p>
   </section>
 
-  <!-- ============ 4. Fugacity Calculator ============ -->
+  <!-- ============ 5. Fugacity Calculator ============ -->
   <section class="project">
     <div class="project-top">
       <p class="kicker">Chemical Engineering Thermodynamics · Web Tool</p>
