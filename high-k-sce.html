@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>High-k Gate Dielectrics and SCE | Junha Kim</title>
+<meta name="description" content="UTB-SOI NMOSFET의 게이트 길이 축소에 따른 SCE와 High-K 게이트 유전체를 통한 완화 — TCAD 시뮬레이션 프로젝트 상세 보고. Junha Kim.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --paper:#fbfbfc;
+    --ink:#16181d;
+    --ink-soft:#5a6069;
+    --muted:#8c929b;
+    --rule:#e3e5e9;
+    --rule-soft:#eef0f3;
+    --uv:#4b3fd4;
+    --uv-wash:#efeefc;
+    --measure:46rem;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",Pretendard,-apple-system,BlinkMacSystemFont,
+      "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    font-size:16.5px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--uv);text-decoration:none;}
+  a:hover{text-decoration:underline;text-underline-offset:3px;}
+  a:focus-visible{outline:2px solid var(--uv);outline-offset:3px;border-radius:2px;}
+
+  /* ---------- nav ---------- */
+
+  .topbar{
+    position:sticky;top:0;z-index:10;
+    background:rgba(251,251,252,.92);
+    backdrop-filter:saturate(180%) blur(8px);
+    border-bottom:1px solid var(--rule);
+  }
+
+  .topbar-inner{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:.85rem 1.5rem;
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:1.75rem;
+  }
+
+  .wordmark{
+    margin-right:1.75rem;
+    font-weight:600;
+    font-size:.95rem;
+    color:var(--ink);
+    letter-spacing:-.01em;
+    white-space:nowrap;
+  }
+  .wordmark:hover{text-decoration:none;}
+
+  .topbar nav{display:flex;gap:1.15rem;overflow-x:auto;scrollbar-width:none;}
+  .topbar nav::-webkit-scrollbar{display:none;}
+
+  .topbar nav a{
+    margin-right:1.15rem;
+    font-size:.85rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    padding-bottom:2px;
+    border-bottom:1.5px solid transparent;
+  }
+  .topbar nav a:hover{color:var(--ink);text-decoration:none;}
+  .topbar nav a:last-child{margin-right:0;}
+  .topbar nav a[aria-current="page"]{color:var(--uv);border-bottom-color:var(--uv);}
+
+  @supports (gap:1rem){
+    .topbar nav a{margin-right:0;}
+    .wordmark{margin-right:0;}
+  }
+
+  /* ---------- layout ---------- */
+
+  .page{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:3.25rem 1.5rem 5rem;
+  }
+
+  .page-head{text-align:center;margin-bottom:3rem;}
+
+  .page-head h1{
+    margin:0;
+    font-size:2rem;
+    font-weight:600;
+    letter-spacing:-.02em;
+  }
+  .page-head p{
+    margin:.6rem auto 0;
+    max-width:32rem;
+    font-size:.98rem;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- project ---------- */
+
+  .project{
+    margin-top:3.25rem;
+    padding-top:2.25rem;
+    border-top:1px solid var(--rule);
+  }
+  .project:first-of-type{margin-top:0;padding-top:0;border-top:0;}
+
+  .project-top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:1rem;
+    flex-wrap:wrap;
+  }
+
+  .kicker{margin:0;font-size:.8rem;color:var(--muted);}
+
+  .status{
+    font-size:.75rem;
+    color:var(--muted);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:.05rem .5rem;
+    white-space:nowrap;
+  }
+  .status.live{color:var(--uv);border-color:var(--uv);}
+
+  .project h2{
+    margin:.25rem 0 0;
+    font-size:1.28rem;
+    font-weight:600;
+    letter-spacing:-.015em;
+    line-height:1.4;
+  }
+  .project h2 .ko{
+    display:block;
+    font-size:.92rem;
+    font-weight:400;
+    color:var(--muted);
+    margin-top:.2rem;
+    letter-spacing:0;
+  }
+
+  .project p.lead{margin:1.1rem 0 0;}
+
+  .meta{
+    list-style:none;
+    margin:1.35rem 0 0;
+    padding:0;
+    border-top:1px solid var(--rule-soft);
+  }
+  .meta li{
+    display:flex;
+    gap:1rem;
+    padding:.6rem 0;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:.92rem;
+  }
+  .meta .k{flex:0 0 8.5rem;color:var(--muted);}
+  .meta .v{color:var(--ink);}
+
+  .tools{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.4rem;
+    margin:1.35rem 0 0;
+    padding:0;
+    list-style:none;
+  }
+  .tools li{
+    font-size:.8rem;
+    color:var(--uv);
+    background:var(--uv-wash);
+    border-radius:2px;
+    padding:.15rem .55rem;
+  }
+
+  .pending{
+    margin:1.35rem 0 0;
+    padding:.85rem 1rem;
+    border:1px dashed var(--rule);
+    font-size:.88rem;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  .more{
+    margin-top:3.25rem;
+    padding:2rem 1rem;
+    border-top:1px solid var(--rule);
+    text-align:center;
+    font-size:.9rem;
+    color:var(--muted);
+  }
+
+  /* ---------- footer ---------- */
+
+  footer{
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:1.75rem 1.5rem 3rem;
+    border-top:1px solid var(--rule);
+    font-size:.84rem;
+    color:var(--muted);
+    text-align:center;
+  }
+  footer span + span::before{content:"·";margin:0 .5rem;color:var(--rule);}
+
+  @media (max-width:640px){
+    body{font-size:16px;}
+    .page{padding:2.5rem 1.25rem 3.5rem;}
+    .page-head h1{font-size:1.75rem;}
+    .project h2{font-size:1.15rem;}
+    .topbar-inner{padding:.75rem 1.25rem;gap:1.1rem;}
+    .meta li{display:block;}
+    .meta .k{margin-bottom:.1rem;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;animation:none!important;}
+  }
+
+  @media print{
+    .topbar{display:none;}
+    body{background:#fff;font-size:11pt;}
+    a{color:inherit;}
+  }
+
+  /* ---------- write-up page ---------- */
+
+  .page-report{max-width:54rem;}
+  .rep-head{margin-bottom:1.75rem;}
+  .rep-head .crumb{margin:0 0 1.25rem;font-size:.85rem;}
+  .rep-head h1{
+    margin:.3rem 0 0;
+    font-size:1.65rem;
+    font-weight:600;
+    letter-spacing:-.02em;
+    line-height:1.35;
+  }
+  .rep-head h1 .ko{
+    display:block;
+    margin-top:.25rem;
+    font-size:.98rem;
+    font-weight:400;
+    color:var(--muted);
+    letter-spacing:0;
+  }
+  .toc{
+    display:flex;flex-wrap:wrap;gap:.35rem .5rem;
+    margin:0 0 2rem;padding:.9rem 0;
+    border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  }
+  .toc a{
+    font-size:.82rem;
+    color:var(--ink-soft);
+    padding:.1rem .55rem;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    background:#fff;
+  }
+  .toc a:hover{color:var(--uv);border-color:var(--uv);text-decoration:none;}
+  .toc a b{font-weight:500;color:var(--uv);margin-right:.3rem;font-variant-numeric:tabular-nums;}
+
+  .report{
+    font-size:.97rem;
+    line-height:1.8;
+    word-break:keep-all;
+    overflow-wrap:break-word;
+  }
+  .report p{margin:.8rem 0;}
+  .report .rep-lead{margin-top:0;color:var(--ink-soft);}
+  .report .small{font-size:.82rem;color:var(--muted);margin:.45rem 0 .9rem;}
+  .report ul,.report ol{margin:.8rem 0;padding-left:1.25rem;}
+  .report li{margin:.35rem 0;}
+  .report code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.84em;
+    background:var(--rule-soft);
+    padding:.05rem .3rem;
+    border-radius:2px;
+    word-break:break-all;
+  }
+  .report h3{
+    margin:2.8rem 0 0;
+    padding-top:1.5rem;
+    border-top:1px solid var(--rule);
+    font-size:1.15rem;
+    font-weight:600;
+    letter-spacing:-.01em;
+    scroll-margin-top:4.5rem;
+  }
+  .report h3:first-of-type{margin-top:0;}
+  .report h3 .n{
+    display:inline-block;
+    min-width:2rem;
+    margin-right:.35rem;
+    font-weight:500;
+    color:var(--uv);
+    font-variant-numeric:tabular-nums;
+  }
+  .report h4{margin:1.8rem 0 0;font-size:.98rem;font-weight:600;color:var(--ink);}
+
+  .report .formula{
+    margin:.9rem 0;
+    padding:.7rem 1rem;
+    border-left:2px solid var(--uv);
+    background:var(--uv-wash);
+    font-size:.93rem;
+    overflow-x:auto;
+    word-break:normal;
+  }
+  .report .callout{
+    margin:1rem 0;
+    padding:.5rem 1rem .5rem .5rem;
+    border-left:2px solid var(--uv);
+    background:#fff;
+  }
+
+  .tbl-wrap{margin:1rem 0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .report table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.85rem;
+    line-height:1.55;
+    word-break:keep-all;
+  }
+  .report th{
+    padding:.45rem .65rem;
+    text-align:left;
+    font-weight:500;
+    color:var(--muted);
+    border-bottom:1px solid var(--rule);
+    vertical-align:bottom;
+    white-space:nowrap;
+  }
+  .report td{
+    padding:.5rem .65rem;
+    border-bottom:1px solid var(--rule-soft);
+    vertical-align:top;
+  }
+  .report th.num,.report td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .report table.wide td{min-width:11rem;}
+  .report tr.hl td{background:var(--uv-wash);}
+
+  .report figure{margin:0;}
+  .report figure img{display:block;width:100%;height:auto;border:1px solid var(--rule-soft);background:#fff;}
+  .report figcaption{margin-top:.35rem;font-size:.78rem;line-height:1.5;color:var(--muted);}
+  .report .figsingle{margin:1rem auto;max-width:36rem;}
+  .report .figsingle.narrow{max-width:15rem;}
+  .report .figgrid{display:grid;gap:.9rem;margin:1rem 0;}
+  .report .figgrid.three{grid-template-columns:repeat(3,minmax(0,1fr));}
+
+  .report .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:.45rem;margin:1rem 0;}
+  .report .flow span{
+    padding:.45rem .7rem;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    background:#fff;
+    font-size:.85rem;
+    font-weight:500;
+    line-height:1.4;
+  }
+  .report .flow small{font-weight:400;color:var(--muted);font-size:.76rem;}
+  .report .flow i{align-self:center;color:var(--muted);font-style:normal;}
+
+  .codebox{margin:.75rem 0;border:1px solid var(--rule);border-radius:2px;background:#fff;}
+  .codebox > summary{
+    padding:.55rem .9rem;
+    font-size:.85rem;
+    font-weight:500;
+    color:var(--uv);
+    cursor:pointer;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .codebox > summary:focus-visible{outline:2px solid var(--uv);outline-offset:-2px;}
+  .codebox[open] > summary{border-bottom:1px solid var(--rule);}
+  .codebox pre{
+    margin:0;
+    padding:.9rem 1rem;
+    max-height:32rem;
+    overflow:auto;
+    background:var(--rule-soft);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.77rem;
+    line-height:1.55;
+    tab-size:4;
+  }
+  .codebox pre code{background:none;padding:0;font-size:inherit;word-break:normal;}
+
+  .report .refs{font-size:.85rem;color:var(--ink-soft);}
+  .report-end{
+    margin:3rem 0 0;padding-top:1.5rem;
+    border-top:1px solid var(--rule);
+    text-align:center;
+  }
+
+  @media (max-width:640px){
+    .rep-head h1{font-size:1.4rem;}
+    .report{font-size:.95rem;}
+    .report .figgrid.three.idvg{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="index.html">Junha Kim</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="skills.html">Skills</a>
+      <a href="projects.html" aria-current="page">Projects</a>
+      <a href="research.html">Research</a>
+      <a href="activities.html">Activities</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</div>
+
+<main class="page page-report">
+
+  <header class="rep-head">
+    <p class="crumb"><a href="projects.html#high-k">&larr; Back to Projects</a></p>
+    <p class="kicker">Sentaurus TCAD · Device Simulation</p>
+    <h1>
+      Short Channel Effect Optimization with High-k Gate Dielectrics
+      <span class="ko">High-k 물질 적용을 통한 소자의 SCE 최적화</span>
+    </h1>
+  </header>
+
+  <nav class="toc" aria-label="목차"><a href="#s01"><b>01</b>요약</a><a href="#s02"><b>02</b>배경</a><a href="#s03"><b>03</b>이론</a><a href="#s04"><b>04</b>설계</a><a href="#s05"><b>05</b>코드</a><a href="#s06"><b>06</b>결과</a><a href="#s07"><b>07</b>결론</a><a href="#s08"><b>08</b>한계</a><a href="#s09"><b>09</b>트러블슈팅</a><a href="#s10"><b>10</b>재현 방법</a></nav>
+
+  <article class="report">
+<p class="rep-lead">UTB-SOI NMOSFET에서 게이트 길이 축소가 단채널 효과(SCE)를 얼마나 악화시키는지 확인하고, 게이트 유전체의 물리 두께는 그대로 둔 채 소재만 High-K로 바꿔 이를 얼마나 완화할 수 있는지를 DIBL 중심으로 정량 평가한 TCAD 시뮬레이션 프로젝트입니다. (숭실대학교 반도체집적공정 팀 프로젝트, 4인, 2026-1학기)</p><h3 id="s01"><span class="n">01</span>프로젝트 요약</h3><p><b>질문.</b> 게이트 길이를 줄이면 SCE가 얼마나 나빠지고, 유전체 물리 두께를 그대로 둔 채 소재만 High-K로 바꾸면 그 손실을 얼마나 되찾을 수 있는가?</p><p><b>접근.</b> 같은 UTB-SOI NMOSFET 구조에서 (1) 유전체를 SiO<sub>2</sub>로 고정하고 Lg를 100 nm → 50 nm로 줄여 SCE 악화를 확인한 뒤, (2) Lg = 50 nm에서 유전체를 SiO<sub>2</sub> → Al<sub>2</sub>O<sub>3</sub> → HfO<sub>2</sub>로 바꿔 완화 정도를 정량화했습니다. 모든 조건에서 V<sub>d</sub> = 0.05 V(선형)와 1.0 V(포화)의 Id–Vg를 계산해 DIBL을 구했습니다.</p><div class="tbl-wrap"><table class="" style="min-width:520px"><thead><tr><th>비교 조건</th><th class=num>DIBL (mV/V)</th><th>해석</th></tr></thead><tbody><tr><td>SiO<sub>2</sub>, Lg 100 nm</td><td class=num>26.9</td><td>기준 소자</td></tr><tr><td>SiO<sub>2</sub>, Lg 50 nm</td><td class=num>76.4</td><td>게이트 길이 축소로 약 2.8배 악화</td></tr><tr><td>Al<sub>2</sub>O<sub>3</sub>, Lg 50 nm</td><td class=num>28.1</td><td>SiO<sub>2</sub> 50 nm 대비 63% 감소 (SiO<sub>2</sub> 100 nm 수준으로 회복)</td></tr><tr class="hl"><td>HfO<sub>2</sub>, Lg 50 nm</td><td class=num>10.3</td><td>SiO<sub>2</sub> 50 nm 대비 87% 감소 (SiO<sub>2</sub> 100 nm보다 낮음)</td></tr></tbody></table></div><p class="small">DIBL은 I<sub>crit</sub> = 10<sup>−7</sup> A/µm 기준 정전류 V<sub>th</sub>로 추출했습니다.</p><ul><li>서브문턱 스윙(SS, V<sub>d</sub> = 0.05 V, Lg = 50 nm)은 SiO<sub>2</sub> 71.5 → Al<sub>2</sub>O<sub>3</sub> 65.4 → HfO<sub>2</sub> 61.5 mV/dec로 이상값(60 mV/dec)에 가까워졌습니다.</li><li>유전율이 높은 소재일수록 DIBL이 작았고, 이 순서(SiO<sub>2</sub> &gt; Al<sub>2</sub>O<sub>3</sub> &gt; HfO<sub>2</sub>)는 이론적 기대와 정성적으로 일치합니다.</li><li>다만 이번 실험에서는 유전체와 함께 게이트 전극(Poly-Si → TiN)도 바뀌어 두 효과를 분리하지 못했습니다. 08 한계 항목을 참고하세요.</li></ul><h3 id="s02"><span class="n">02</span>배경과 문제 정의</h3><p>게이트 길이(Lg)를 줄이면 집적도가 높아지고, 채널을 지나는 캐리어의 이동 거리가 짧아져 속도가 빨라지며, 더 낮은 전압에서 구동할 수 있습니다. 그러나 Lg가 공핍 영역 폭과 비슷한 수준으로 짧아지면 게이트가 채널을 지배하는 힘이 약해지고 드레인 전기장이 소스 쪽 전위 장벽에 영향을 미칩니다. 그 결과 문턱전압이 낮아지고(V<sub>th</sub> roll-off), 서브문턱 특성이 나빠지며(SS 증가), 누설전류가 늘고, DIBL이 커집니다. 이를 통틀어 <b>단채널 효과(Short Channel Effect, SCE)</b>라고 합니다.</p><p>집적도·속도·전력의 이점 때문에 Lg 축소는 피할 수 없으므로, 실제 과제는 <b>“Lg는 줄이되 SCE는 다른 수단으로 억제하는 것”</b>입니다. 본 프로젝트는 그 수단 중 하나인 High-K 게이트 유전체의 효과를, 유전체 물리 두께를 바꾸지 않고 소재만 바꾸는 방식으로 검증했습니다.</p><h3 id="s03"><span class="n">03</span>이론적 배경</h3><h4>DIBL (Drain-Induced Barrier Lowering)</h4><p>드레인 전압이 높아지면 드레인 전기장이 채널로 침투해 소스–채널 사이의 전위 장벽이 낮아지고, 같은 게이트 전압에서 더 많은 전자가 넘어옵니다. 이는 문턱전압이 낮아지는 것으로 관측됩니다.</p><div class="formula">DIBL = [ V<sub>th</sub>(V<sub>d,lin</sub>) − V<sub>th</sub>(V<sub>d,sat</sub>) ] / ( V<sub>d,sat</sub> − V<sub>d,lin</sub> ) × 1000 &nbsp;[mV/V]</div><p>본 프로젝트에서 V<sub>d,lin</sub> = 0.05 V, V<sub>d,sat</sub> = 1.0 V이므로 분모는 0.95 V입니다. <b>값이 작을수록 게이트 제어력이 우수</b>합니다.</p><h4>서브문턱 스윙 (SS)</h4><div class="formula">SS = ∂V<sub>g</sub> / ∂(log<sub>10</sub> I<sub>d</sub>) ≈ (kT/q)·ln10·( 1 + C<sub>d</sub> / C<sub>ox</sub> )</div><p>I<sub>d</sub>를 10배 늘리는 데 필요한 게이트 전압(mV/dec)입니다. 상온 이론 하한은 약 60 mV/dec이며, 게이트 산화막 용량 C<sub>ox</sub>가 클수록(High-K일수록) C<sub>d</sub>/C<sub>ox</sub> 항이 줄어 이상값에 가까워집니다.</p><h4>문턱전압 정의: gm 최대점 vs 정전류</h4><div class="tbl-wrap"><table class="" style="min-width:560px"><thead><tr><th>방법</th><th>정의</th><th>특징</th></tr></thead><tbody><tr><td>V<sub>tgm</sub></td><td>gm(= dI<sub>d</sub>/dV<sub>g</sub>)이 최대인 점에서 Id–Vg 접선이 Vg축과 만나는 전압</td><td>한 곡선만으로 추출 가능. 고V<sub>d</sub>에서 이동도 저하·직렬저항의 영향을 받기 쉬움</td></tr><tr><td>V<sub>th,CC</sub></td><td>I<sub>d</sub>가 기준 전류 I<sub>crit</sub>에 도달하는 V<sub>g</sub></td><td>DIBL 추출의 표준 방식. 본 프로젝트는 I<sub>crit</sub> = 10<sup>−7</sup> A/µm</td></tr></tbody></table></div><h4>UTB-SOI 구조가 SCE에 유리한 이유</h4><p>UTB-SOI(Ultra-Thin-Body Silicon-On-Insulator)는 극박막 실리콘 채널 아래에 매립 산화막(BOX)을 둔 구조입니다.</p><ul><li><b>완전 공핍.</b> 채널 도핑 3×10<sup>15</sup> cm<sup>−3</sup>에서 최대 공핍폭은 약 0.5 µm(n<sub>i</sub> = 10<sup>10</sup> cm<sup>−3</sup> 가정)로, 5 nm 박막은 항상 완전 공핍됩니다. 드레인 전기장이 침투할 중성 영역이 없습니다.</li><li><b>누설 경로 차단.</b> BOX가 채널과 기판을 절연해 기판 쪽 드레인–소스 누설 경로를 끊습니다.</li><li><b>자연 길이(natural length).</b> 정전기적 제어의 특성 길이 λ ∝ √[ (ε<sub>Si</sub>/ε<sub>ox</sub>)·t<sub>Si</sub>·t<sub>ox</sub> ] 는 박막이 얇을수록, 산화막 유전율이 높을수록 작아집니다. λ가 작으면 더 짧은 Lg까지 SCE가 억제됩니다.</li></ul><h4>High-K와 EOT</h4><div class="formula">EOT = t<sub>phys</sub> × ( ε<sub>SiO<sub>2</sub></sub> / ε<sub>hk</sub> )</div><p>같은 물리 두께에서 유전율이 높으면 게이트 용량이 커져 채널 제어가 강해집니다. 반대로 같은 용량(EOT)을 유지한다면 물리 두께를 늘려 게이트 터널링을 줄일 수 있습니다.</p><div class="tbl-wrap"><table class="" style="min-width:480px"><thead><tr><th>소재</th><th>비유전율 k (문헌 대표값)</th><th>t<sub>phys</sub> = 2.4 nm 기준 이론 EOT</th></tr></thead><tbody><tr><td>SiO<sub>2</sub></td><td>약 3.9</td><td>2.4 nm</td></tr><tr><td>Al<sub>2</sub>O<sub>3</sub></td><td>약 9</td><td>약 1.0 nm</td></tr><tr><td>HfO<sub>2</sub></td><td>약 22 ~ 25</td><td>약 0.4 nm</td></tr></tbody></table></div><p class="small">위 표는 문헌 대표값에 근거한 이론 예시이며, 시뮬레이션에 실제 적용된 유전율은 08 한계 항목에서 다룹니다.</p><h3 id="s04"><span class="n">04</span>시뮬레이션 설계</h3><h4>워크플로우</h4><div class="flow"><span>SWB 파라미터<br><small>Lg · HighK · Vd</small></span><i>→</i><span>SProcess<br><small>구조·도핑 생성</small></span><i>→</i><span>SDevice<br><small>V<sub>d</sub> 인가 후 V<sub>g</sub> 스윕</small></span><i>→</i><span>SVisual<br><small>곡선·지표 추출</small></span><i>→</i><span>DIBL<br><small>V<sub>th</sub> 비교</small></span></div><h4>소자 구조</h4><div class="figsingle narrow"><figure><a href="images/high-k/tdr_al2o3_lg50.png" target="_blank" rel="noopener"><img src="images/high-k/tdr_al2o3_lg50.png" width="620" height="892" loading="lazy" decoding="async" alt="Lg 50 nm Al₂O₃/TiN UTB-SOI NMOSFET 단면 도핑 분포"></a><figcaption>그림 1. UTB-SOI NMOSFET 단면 도핑 분포 (Lg = 50 nm, Al<sub>2</sub>O<sub>3</sub>/TiN, V<sub>d</sub> = 0.05 V). X: 깊이, Y: 수평 방향</figcaption></figure></div><div class="tbl-wrap"><table class="" style="min-width:560px"><thead><tr><th>구성 요소</th><th>치수 / 조건</th><th>역할</th></tr></thead><tbody><tr><td>게이트 전극</td><td>두께 55 nm. SiO<sub>2</sub> 조건은 Poly-Si, High-K 조건은 TiN</td><td>채널 전위 제어</td></tr><tr><td>게이트 유전체</td><td><b>물리 두께 2.4 nm 고정</b>. SiO<sub>2</sub> / Al<sub>2</sub>O<sub>3</sub> / HfO<sub>2</sub></td><td>게이트–채널 절연, 소재만 변수</td></tr><tr><td>스페이서</td><td>Nitride, 폭 14 nm</td><td>게이트와 S/D 분리</td></tr><tr><td>Raised S/D</td><td>높이 35 nm, 바깥쪽 연장 120 nm. P (6 keV, 1.8×10<sup>14</sup>) + As (2 keV, 3.0×10<sup>14</sup>)</td><td>접촉 저항 감소</td></tr><tr><td>Si 박막 채널 (ST)</td><td><b>5 nm (0.005 µm)</b>, p형 B 3×10<sup>15</sup> cm<sup>−3</sup></td><td>전류 통로, 완전 공핍</td></tr><tr><td>BOX</td><td>SiO<sub>2</sub> 100 nm</td><td>채널–기판 절연</td></tr><tr><td>Si 기판</td><td>250 nm, p형</td><td>지지 기판</td></tr><tr><td>활성화 어닐</td><td>750 °C, 0.015 s</td><td>저열예산 활성화</td></tr></tbody></table></div><h4>실험 변수</h4><div class="tbl-wrap"><table class="" style="min-width:520px"><thead><tr><th>변수</th><th>값</th><th>비고</th></tr></thead><tbody><tr><td>게이트 길이 Lg</td><td>100 nm, 50 nm</td><td>스케일링 효과 확인</td></tr><tr><td>게이트 유전체</td><td>SiO<sub>2</sub> (Oxide), Al<sub>2</sub>O<sub>3</sub>, HfO<sub>2</sub></td><td>소재만 변경</td></tr><tr><td>드레인 전압 V<sub>d</sub></td><td>0.05 V, 1.0 V</td><td>DIBL 계산용 (선형/포화)</td></tr><tr><td>고정 조건</td><td>ST = 5 nm, t<sub>phys</sub> = 2.4 nm, 채널 도핑, S/D 공정, 스페이서</td><td>변인 통제</td></tr></tbody></table></div><p class="small">총 2 (Lg) × 3 (유전체) × 2 (V<sub>d</sub>) = 12 조건</p><h4>물리 모델 (SDevice)</h4><div class="tbl-wrap"><table class="" style="min-width:520px"><thead><tr><th>항목</th><th>설정</th></tr></thead><tbody><tr><td>지배 방정식</td><td>Poisson + 전자·정공 연속 방정식 (Drift-Diffusion), Coupled 해법</td></tr><tr><td>통계</td><td>Fermi–Dirac</td></tr><tr><td>밴드갭 협소화</td><td>OldSlotboom</td></tr><tr><td>이동도</td><td>PhuMob (도핑 의존) + Enormal (수직 전계) + HighFieldSaturation</td></tr><tr><td>재결합</td><td>SRH (도핑 의존)</td></tr><tr><td>미포함</td><td>양자 구속, 게이트 터널링, 밴드간 터널링, Halo·LDD</td></tr></tbody></table></div><h4>설계 결정과 근거</h4><div class="tbl-wrap"><table class="" style="min-width:520px"><thead><tr><th>결정</th><th>근거</th></tr></thead><tbody><tr><td>ST = 5 nm</td><td>완전 공핍을 확보해 구조 자체로 SCE를 억제하는 UTB 조건</td></tr><tr><td>유전체 물리 두께 고정</td><td>유전율 변화의 순수 효과만 비교하기 위한 변인 통제</td></tr><tr><td>Halo / LDD 미적용</td><td>다른 SCE 억제 기법이 유전체 효과를 가리지 않도록 배제</td></tr><tr><td>낮은 채널 도핑 (3×10<sup>15</sup>)</td><td>박막·BOX가 SCE를 잡으므로 채널은 저농도로 유지</td></tr><tr><td>GateWF 미지정</td><td>게이트 전극 재료의 기본 처리에 맡김 (08 한계 항목 참고)</td></tr></tbody></table></div><h4>추출 지표 정의</h4><div class="tbl-wrap"><table class="" style="min-width:520px"><thead><tr><th>지표</th><th>정의</th><th>좋은 방향</th></tr></thead><tbody><tr><td>V<sub>tgm</sub></td><td>gm 최대점 기반 문턱전압</td><td>비교용</td></tr><tr><td>V<sub>th,CC</sub></td><td>I<sub>d</sub> = I<sub>crit</sub>(10<sup>−7</sup> A/µm)가 되는 V<sub>g</sub></td><td>DIBL 계산에 사용</td></tr><tr><td>SS</td><td>I<sub>d</sub>를 10배 올리는 데 필요한 V<sub>g</sub> (mV/dec)</td><td>60에 가까울수록</td></tr><tr><td>gm</td><td>dI<sub>d</sub>/dV<sub>g</sub>, 게이트의 전류 제어 효율</td><td>클수록</td></tr><tr><td>I<sub>dmax</sub></td><td>V<sub>g</sub> = 1.0 V에서의 최대 드레인 전류</td><td>클수록</td></tr><tr><td>I<sub>on</sub></td><td>ON 상태 전류. 본 스윕에서는 V<sub>g</sub> = 1.0 V에서의 I<sub>d</sub></td><td>클수록</td></tr><tr><td>I<sub>off</sub></td><td>OFF 상태 전류. Vth 기준 V<sub>g</sub> = V<sub>tgm</sub> − 0.3 V에서의 I<sub>d</sub></td><td>작을수록</td></tr><tr><td>I<sub>on</sub>/I<sub>off</sub></td><td>스위칭 품질 (ON 전류 ÷ OFF 전류)</td><td>클수록</td></tr><tr><td>DIBL</td><td>03 이론 참고</td><td>작을수록</td></tr></tbody></table></div><h3 id="s05"><span class="n">05</span>코드 구성과 전체 코드</h3><p>세 스크립트는 Sentaurus Workbench(SWB)에서 <code>@Lg@</code>, <code>@HighK@</code>, <code>@Vd@</code>, <code>@node@</code> 변수를 받아 동작합니다.</p><div class="tbl-wrap"><table class="" style="min-width:560px"><thead><tr><th>파일</th><th>역할</th><th>핵심 동작</th></tr></thead><tbody><tr><td>sprocess.cmd</td><td>구조·도핑 생성</td><td><code>@HighK@</code>에 따라 유전체·게이트 재료를 분기하고, Lg에 따라 좌표를 계산해 영역·메시·S/D 임플란트·접점을 정의</td></tr><tr><td>sdevice.cmd</td><td>전기 특성 계산</td><td>드레인을 <code>@Vd@</code>까지 올린 뒤 게이트를 0 → 1.0 V로 스윕하여 <code>IdVg_*.plt</code> 생성</td></tr><tr><td>svisual.tcl</td><td>그래프·지표 추출</td><td>Id–Vg 곡선 생성, V<sub>tgm</sub>·SS·gm·I<sub>dmax</sub>·V<sub>th,CC</sub> 추출, Vth 기준 I<sub>on</sub>/I<sub>off</sub> 계산</td></tr></tbody></table></div><p><b>SProcess에서 High-K를 다루는 방식.</b> <code>mater add</code>로 HfO<sub>2</sub>, TiN, 그리고 Al<sub>2</sub>O<sub>3</sub>용 내부 재료명 <code>hkA</code>를 등록하고, <code>@HighK@</code> 값에 따라 게이트 유전체 영역과 게이트 전극 영역에 배치할 재료를 선택합니다. 유전체 두께(<code>tDiel</code> = 0.0024 µm)는 모든 조건에서 동일합니다. Sentaurus T-2022.03의 SDevice가 Al<sub>2</sub>O<sub>3</sub> 재료명을 직접 인식하지 못해 별도 이름으로 등록하는 방식을 택했습니다.</p><p><b>SVisual의 I<sub>on</sub>/I<sub>off</sub>.</b> 소자마다 V<sub>th</sub>가 다르므로 절대 전압(V<sub>g</sub> = 0 / 1.0 V) 대신 각 소자의 V<sub>tgm</sub>을 기준으로 I<sub>off</sub>는 V<sub>tgm</sub> − 0.3 V, I<sub>on</sub>은 V<sub>tgm</sub> + 0.7 V에서 읽습니다. 스윕 상한이 1.0 V이므로 V<sub>tgm</sub> + 0.7 V가 범위를 넘는 경우 가장 가까운 점(= V<sub>g</sub> 1.0 V)의 값이 사용됩니다.</p><details class="codebox"><summary>sprocess.cmd</summary><pre><code>#header
+
+set chLen   @Lg@
+set siThk    0.005
+set gdMat   "@HighK@"
+
+mater add name=HfO2   new.like=Oxide
+mater add name=TiN    new.like=Aluminum
+mater add name=hkA    new.like=Oxide
+
+set tDiel   0.0024
+set tGate   0.055
+set tSpcr   0.014
+set tRsd    0.035
+set lExt    0.120
+set tBox    0.100
+set tSub    0.250
+
+set pBody   3e15
+
+if {($gdMat == "Oxide") || ($gdMat == "SiO2")} {
+    set dielReg  Oxide
+    set gateReg  PolySilicon
+} elseif {$gdMat == "HfO2"} {
+    set dielReg  HfO2
+    set gateReg  TiN
+} elseif {$gdMat == "Al2O3"} {
+    set dielReg  hkA
+    set gateReg  TiN
+} else {
+    puts "STOP invalid HighK $gdMat"
+    exit 1
+}
+
+#endheader
+
+set gHalf [expr 0.5*$chLen]
+
+set px0 [expr -($tDiel + $tGate)]
+set px1 [expr -$tDiel]
+set px2 0.0
+set px3 $siThk
+set px4 [expr $siThk + $tBox]
+set px5 [expr $siThk + $tBox + $tSub]
+set pxR [expr -$tRsd]
+
+set py0 [expr -$gHalf]
+set py1 [expr  $gHalf]
+set pyS [expr $py0 - $tSpcr]
+set pyD [expr $py1 + $tSpcr]
+set pyS2 [expr $pyS - $lExt]
+set pyD2 [expr $pyD + $lExt]
+
+set cS0 [expr $pyS2 + 0.030]
+set cS1 [expr $pyS  - 0.020]
+set cD0 [expr $pyD  + 0.020]
+set cD1 [expr $pyD2 - 0.030]
+
+set cG0 [expr -0.35*$gHalf]
+set cG1 [expr  0.35*$gHalf]
+
+line x location=$px0 spacing=0.0030 tag=L_gtop
+line x location=$pxR spacing=0.0012 tag=L_rtop
+line x location=$px1 spacing=0.0004 tag=L_dtop
+line x location=$px2 spacing=0.0004 tag=L_sitop
+line x location=$px3 spacing=0.0007 tag=L_sibot
+line x location=$px4 spacing=0.0040 tag=L_boxbot
+line x location=$px5 spacing=0.0300 tag=L_subbot
+
+line y location=$pyS2 spacing=0.004 tag=L_sout
+line y location=$pyS  spacing=0.001 tag=L_sin
+line y location=$py0  spacing=0.001 tag=L_gl
+line y location=0.0   spacing=0.001 tag=L_mid
+line y location=$py1  spacing=0.001 tag=L_gr
+line y location=$pyD  spacing=0.001 tag=L_din
+line y location=$pyD2 spacing=0.004 tag=L_dout
+
+region Silicon \
+    xlo=L_sitop xhi=L_sibot \
+    ylo=L_sout yhi=L_dout
+
+region Oxide \
+    xlo=L_sibot xhi=L_boxbot \
+    ylo=L_sout yhi=L_dout
+
+region Silicon \
+    xlo=L_boxbot xhi=L_subbot \
+    ylo=L_sout yhi=L_dout
+
+region $dielReg \
+    xlo=L_dtop xhi=L_sitop \
+    ylo=L_gl yhi=L_gr
+
+region $gateReg \
+    xlo=L_gtop xhi=L_dtop \
+    ylo=L_gl yhi=L_gr
+
+region Nitride \
+    xlo=L_rtop xhi=L_sitop \
+    ylo=L_sin yhi=L_gl
+
+region Nitride \
+    xlo=L_rtop xhi=L_sitop \
+    ylo=L_gr yhi=L_din
+
+region Silicon \
+    xlo=L_rtop xhi=L_sitop \
+    ylo=L_sout yhi=L_sin
+
+region Silicon \
+    xlo=L_rtop xhi=L_sitop \
+    ylo=L_din yhi=L_dout
+
+init wafer.orient=100 field=Boron concentration=$pBody
+
+AdvancedCalibration
+pdbSet Silicon Dopant DiffModel ChargedFermi
+pdbSet Mechanics EtchDepoRelax 0
+
+refinebox min.normal.size=0.0004 normal.growth.ratio=1.4
+
+refinebox add \
+    min="$px0 $py0" max="$px3 $py1" \
+    xrefine="0.0004 0.0008 0.0015" \
+    yrefine="0.0004 0.0008 0.0015"
+
+refinebox add \
+    min="$pxR $pyS2" max="$px4 $pyD2" \
+    xrefine="0.0008 0.0015 0.0040" \
+    yrefine="0.0010 0.0020 0.0040"
+
+grid set.Delaunay.type=boxmethod
+grid remesh
+
+mask name=mSrc left=$pyS2 right=$pyS
+mask name=mDrn left=$pyD  right=$pyD2
+
+implant Phosphorus energy=6 dose=1.8e14 tilt=0 rotation=0 mask=mSrc
+implant Phosphorus energy=6 dose=1.8e14 tilt=0 rotation=0 mask=mDrn
+
+implant Arsenic energy=2 dose=3.0e14 tilt=0 rotation=0 mask=mSrc
+implant Arsenic energy=2 dose=3.0e14 tilt=0 rotation=0 mask=mDrn
+
+diffuse time=0.015&lt;s&gt; temperature=750
+
+grid set.Delaunay.type=boxmethod
+
+refinebox add \
+    min="$px0 $py0" max="$px3 $py1" \
+    xrefine="0.0004 0.0008 0.0015" \
+    yrefine="0.0004 0.0008 0.0015"
+
+refinebox add \
+    min="$pxR $pyS2" max="$px3 $pyD2" \
+    xrefine="0.0008 0.0015 0.0040" \
+    yrefine="0.0010 0.0020 0.0040"
+
+grid remesh
+
+contact name=gate box $gateReg \
+    xlo=$px0 xhi=$px1 \
+    ylo=$cG0 yhi=$cG1
+
+contact name=source box Silicon \
+    xlo=$pxR xhi=$px2 \
+    ylo=$cS0 yhi=$cS1
+
+contact name=drain box Silicon \
+    xlo=$pxR xhi=$px2 \
+    ylo=$cD0 yhi=$cD1
+
+contact name=substrate bottom
+
+struct tdr=n@node@ !Gas !interfaces</code></pre></details><details class="codebox"><summary>sdevice.cmd</summary><pre><code>File {
+    Grid      = "@tdr@"
+    Plot      = "@tdrdat@"
+    Current   = "@plot@"
+    Output    = "@log@"
+}
+
+Electrode {
+    { Name="source"    Voltage=0.0 }
+    { Name="drain"     Voltage=0.0 }
+    { Name="gate"      Voltage=0.0 }
+    { Name="substrate" Voltage=0.0 }
+}
+
+Physics {
+    Fermi
+    EffectiveIntrinsicDensity( OldSlotboom )
+}
+
+Physics (Material="Silicon") {
+    Mobility(
+        PhuMob
+        Enormal
+        HighFieldSaturation
+    )
+    Recombination(
+        SRH( DopingDependence )
+    )
+}
+
+Plot {
+    eDensity hDensity
+    eCurrent hCurrent
+    ElectricField
+    Potential
+    SpaceCharge
+    Doping
+    DonorConcentration
+    AcceptorConcentration
+    eMobility hMobility
+    SRHRecombination
+}
+
+Math {
+    Extrapolate
+    RelErrControl
+    Digits=5
+    Iterations=30
+    NotDamped=50
+    Method=ILS
+    ExitOnFailure
+}
+
+Solve {
+    Coupled(Iterations=100) { Poisson }
+    Coupled { Poisson Electron Hole }
+
+    Quasistationary(
+        InitialStep=0.01
+        Increment=1.4
+        MinStep=1e-6
+        MaxStep=0.05
+        Goal { Name="drain" Voltage=@Vd@ }
+    ) {
+        Coupled { Poisson Electron Hole }
+    }
+
+    NewCurrentPrefix="IdVg_"
+    Quasistationary(
+        InitialStep=0.005
+        Increment=1.35
+        MinStep=1e-6
+        MaxStep=0.025
+        Goal { Name="gate" Voltage=1.0 }
+    ) {
+        Coupled { Poisson Electron Hole }
+    }
+}</code></pre></details><details class="codebox"><summary>svisual.tcl</summary><pre><code>#setdep @node|sdevice@
+load_library extract
+set nd @node|sdevice@
+
+load_file "IdVg_n@node|sdevice@_des.plt" -name DAT($nd)
+
+if {[llength [list_plots Plot_IdVg]]==0} {
+    create_plot -1d -name Plot_IdVg
+    set_plot_prop -hide_title -show_legend
+    set_axis_prop -title_font_size 16 -scale_font_size 14
+    set_axis_prop -axis x \
+        -title {Gate Voltage [V]} -type linear
+    set_axis_prop -axis y \
+        -title {Drain Current [A/&lt;greek&gt;m&lt;/greek&gt;m]} -type log
+    set_legend_prop -label_font_size 14
+}
+
+select_plots Plot_IdVg
+
+create_curve -name IV($nd) -dataset DAT($nd) \
+    -axisX "gate OuterVoltage" \
+    -axisY "drain TotalCurrent"
+
+if {[info exists runVisualizerNodesTogether]} {
+    set_curve_prop IV($nd) \
+        -label "HighK=@HighK@, Lg=@Lg@um, Vd=@Vd@V" \
+        -color $color -line_style $line -line_width 3
+} else {
+    set_curve_prop IV($nd) \
+        -label "HighK=@HighK@, Lg=@Lg@um, Vd=@Vd@V" \
+        -line_width 3
+}
+
+set vG  [get_variable_data "gate OuterVoltage"  -dataset DAT($nd)]
+set iRaw [get_variable_data "drain TotalCurrent" -dataset DAT($nd)]
+ext::AbsList -out iD -x $iRaw
+
+proc pickAt {xs ys target} {
+    set keepY [lindex $ys 0]
+    set keepD [expr {abs([lindex $xs 0] - $target)}]
+    set m [llength $xs]
+    for {set j 1} {$j &lt; $m} {incr j} {
+        set cx [lindex $xs $j]
+        set cy [lindex $ys $j]
+        set cd [expr {abs($cx - $target)}]
+        if {$cd &lt; $keepD} {
+            set keepD $cd
+            set keepY $cy
+        }
+    }
+    return $keepY
+}
+
+ext::ExtractVtgm -out Vtgm -name Vtgm \
+    -v $vG -i $iD
+
+ext::ExtractExtremum -out Idmax -name Idmax \
+    -x $vG -y $iD -type max
+
+ext::ExtractSS -out SS -name SS \
+    -v $vG -i $iD -vo 0.01
+
+ext::ExtractGm -out gm -name gm \
+    -v $vG -i $iD
+
+set offDelta 0.3
+set onDelta  0.7
+
+set vOff [expr {$Vtgm - $offDelta}]
+set vOn  [expr {$Vtgm + $onDelta}]
+
+set Ioff [pickAt $vG $iD $vOff]
+set Ion  [pickAt $vG $iD $vOn]
+
+if {$Ioff &gt; 0.0} {
+    set rIonIoff [expr {$Ion / $Ioff}]
+} else {
+    set rIonIoff 0.0
+}
+
+puts "DOE: Vth_used   $Vtgm"
+puts "DOE: Vg_off     $vOff"
+puts "DOE: Vg_on      $vOn"
+puts "DOE: Ion        $Ion"
+puts "DOE: Ioff       $Ioff"
+puts "DOE: IonIoff    $rIonIoff"
+
+proc vthByCC {xv yv itgt} {
+    set cnt [llength $xv]
+    for {set k 1} {$k &lt; $cnt} {incr k} {
+        set ax [lindex $xv [expr {$k-1}]]
+        set bx [lindex $xv $k]
+        set ay [lindex $yv [expr {$k-1}]]
+        set by [lindex $yv $k]
+        if {($ay &lt;= $itgt &amp;&amp; $by &gt;= $itgt) || \
+            ($ay &gt;= $itgt &amp;&amp; $by &lt;= $itgt)} {
+            if {$ay &lt;= 0.0 || $by &lt;= 0.0} {
+                return [expr {$ax + ($itgt-$ay)*($bx-$ax)/($by-$ay)}]
+            } else {
+                set lay [expr {log($ay)/log(10.0)}]
+                set lby [expr {log($by)/log(10.0)}]
+                set lit [expr {log($itgt)/log(10.0)}]
+                return [expr {$ax + ($lit-$lay)*($bx-$ax)/($lby-$lay)}]
+            }
+        }
+    }
+    return -99
+}
+
+set Icrit 1e-7
+set VthCC [vthByCC $vG $iD $Icrit]
+
+puts "DOE: VthCC      $VthCC"
+puts "DOE: Icrit      $Icrit"</code></pre></details><h3 id="s06"><span class="n">06</span>결과와 분석</h3><h4>6.1 소자 구조 (TDR, V<sub>d</sub> = 0.05 V)</h4><p>구조는 V<sub>d</sub>와 무관합니다. 게이트 전극·유전체 재료와 Lg만 다릅니다. 이미지를 누르면 원본이 열립니다.</p><div class="figgrid three tdr"><figure><a href="images/high-k/tdr_sio2_lg50.png" target="_blank" rel="noopener"><img src="images/high-k/tdr_sio2_lg50.png" width="613" height="900" loading="lazy" decoding="async" alt="SiO₂, Lg 50 nm 소자 단면 도핑 분포"></a><figcaption>Lg 50 nm · SiO<sub>2</sub> (Poly-Si)</figcaption></figure><figure><a href="images/high-k/tdr_al2o3_lg50.png" target="_blank" rel="noopener"><img src="images/high-k/tdr_al2o3_lg50.png" width="620" height="892" loading="lazy" decoding="async" alt="Al₂O₃, Lg 50 nm 소자 단면 도핑 분포"></a><figcaption>Lg 50 nm · Al<sub>2</sub>O<sub>3</sub> (TiN)</figcaption></figure><figure><a href="images/high-k/tdr_hfo2_lg50.png" target="_blank" rel="noopener"><img src="images/high-k/tdr_hfo2_lg50.png" width="613" height="896" loading="lazy" decoding="async" alt="HfO₂, Lg 50 nm 소자 단면 도핑 분포"></a><figcaption>Lg 50 nm · HfO<sub>2</sub> (TiN)</figcaption></figure><figure><a href="images/high-k/tdr_sio2_lg100.png" target="_blank" rel="noopener"><img src="images/high-k/tdr_sio2_lg100.png" width="612" height="899" loading="lazy" decoding="async" alt="SiO₂, Lg 100 nm 소자 단면 도핑 분포"></a><figcaption>Lg 100 nm · SiO<sub>2</sub> (Poly-Si)</figcaption></figure><figure><a href="images/high-k/tdr_al2o3_lg100.png" target="_blank" rel="noopener"><img src="images/high-k/tdr_al2o3_lg100.png" width="598" height="891" loading="lazy" decoding="async" alt="Al₂O₃, Lg 100 nm 소자 단면 도핑 분포"></a><figcaption>Lg 100 nm · Al<sub>2</sub>O<sub>3</sub> (TiN)</figcaption></figure><figure><a href="images/high-k/tdr_hfo2_lg100.png" target="_blank" rel="noopener"><img src="images/high-k/tdr_hfo2_lg100.png" width="608" height="857" loading="lazy" decoding="async" alt="HfO₂, Lg 100 nm 소자 단면 도핑 분포"></a><figcaption>Lg 100 nm · HfO<sub>2</sub> (TiN)</figcaption></figure></div><p>Lg가 절반으로 줄면 소스와 드레인의 N<sup>+</sup> 영역이 채널을 사이에 두고 그만큼 가까워져, 드레인 전기장이 소스 쪽 장벽에 미치기 쉬운 구조가 됩니다.</p><h4>6.2 Id–Vg 특성 (빨강: V<sub>d</sub> = 0.05 V, 파랑: V<sub>d</sub> = 1.0 V)</h4><p>두 곡선이 가로로 벌어진 정도가 곧 DIBL입니다.</p><div class="figgrid three idvg"><figure><a href="images/high-k/idvg_sio2_lg50.png" target="_blank" rel="noopener"><img src="images/high-k/idvg_sio2_lg50.png" width="1000" height="725" loading="lazy" decoding="async" alt="SiO₂, Lg 50 nm Id-Vg 곡선 (Vd 0.05 V, 1.0 V)"></a><figcaption>Lg 50 nm · SiO<sub>2</sub></figcaption></figure><figure><a href="images/high-k/idvg_al2o3_lg50.png" target="_blank" rel="noopener"><img src="images/high-k/idvg_al2o3_lg50.png" width="1000" height="732" loading="lazy" decoding="async" alt="Al₂O₃, Lg 50 nm Id-Vg 곡선 (Vd 0.05 V, 1.0 V)"></a><figcaption>Lg 50 nm · Al<sub>2</sub>O<sub>3</sub></figcaption></figure><figure><a href="images/high-k/idvg_hfo2_lg50.png" target="_blank" rel="noopener"><img src="images/high-k/idvg_hfo2_lg50.png" width="1000" height="734" loading="lazy" decoding="async" alt="HfO₂, Lg 50 nm Id-Vg 곡선 (Vd 0.05 V, 1.0 V)"></a><figcaption>Lg 50 nm · HfO<sub>2</sub></figcaption></figure><figure><a href="images/high-k/idvg_sio2_lg100.png" target="_blank" rel="noopener"><img src="images/high-k/idvg_sio2_lg100.png" width="1000" height="723" loading="lazy" decoding="async" alt="SiO₂, Lg 100 nm Id-Vg 곡선 (Vd 0.05 V, 1.0 V)"></a><figcaption>Lg 100 nm · SiO<sub>2</sub></figcaption></figure><figure><a href="images/high-k/idvg_al2o3_lg100.png" target="_blank" rel="noopener"><img src="images/high-k/idvg_al2o3_lg100.png" width="1000" height="721" loading="lazy" decoding="async" alt="Al₂O₃, Lg 100 nm Id-Vg 곡선 (Vd 0.05 V, 1.0 V)"></a><figcaption>Lg 100 nm · Al<sub>2</sub>O<sub>3</sub></figcaption></figure><figure><a href="images/high-k/idvg_hfo2_lg100.png" target="_blank" rel="noopener"><img src="images/high-k/idvg_hfo2_lg100.png" width="1000" height="726" loading="lazy" decoding="async" alt="HfO₂, Lg 100 nm Id-Vg 곡선 (Vd 0.05 V, 1.0 V)"></a><figcaption>Lg 100 nm · HfO<sub>2</sub></figcaption></figure></div><ul><li><b>SiO<sub>2</sub>, 50 nm</b>는 두 곡선이 크게 벌어져 있어 드레인 전압에 따른 V<sub>th</sub> 변화가 가장 큽니다.</li><li><b>Al<sub>2</sub>O<sub>3</sub></b>는 간격이 좁아지고, <b>HfO<sub>2</sub></b>는 subthreshold 구간에서 두 곡선이 거의 겹칩니다.</li></ul><h4>6.3 1단계: SiO<sub>2</sub>에서 Lg 축소의 영향 (SCE 악화 확인)</h4><div class="figsingle"><figure><a href="images/high-k/idvg_sio2_lg_compare.png" target="_blank" rel="noopener"><img src="images/high-k/idvg_sio2_lg_compare.png" width="1000" height="722" loading="lazy" decoding="async" alt="SiO₂ 소자 Lg 50 nm와 100 nm의 Id-Vg 비교"></a><figcaption>그림 2. SiO<sub>2</sub> 소자의 Lg 50 nm / 100 nm Id–Vg 비교 (각 Lg마다 V<sub>d</sub> 0.05 V, 1.0 V)</figcaption></figure></div><div class="tbl-wrap"><table class="" style="min-width:560px"><thead><tr><th>지표 (SiO<sub>2</sub>)</th><th>Lg 100 nm</th><th>Lg 50 nm</th><th>변화</th></tr></thead><tbody><tr><td>DIBL (V<sub>th,CC</sub>)</td><td>26.9 mV/V</td><td>76.4 mV/V</td><td>2.8배 증가</td></tr><tr><td>V<sub>th,CC</sub> (V<sub>d</sub> = 0.05 V)</td><td>0.553 V</td><td>0.499 V</td><td>54 mV 하락 (V<sub>th</sub> roll-off)</td></tr><tr><td>SS (V<sub>d</sub> = 0.05 V)</td><td>63.9 mV/dec</td><td>71.5 mV/dec</td><td>이상값에서 멀어짐</td></tr><tr><td>V<sub>g</sub> = 0 V 누설 (V<sub>d</sub> = 1.0 V)</td><td>7.85×10<sup>−16</sup> A/µm</td><td>1.18×10<sup>−13</sup> A/µm</td><td>약 150배 증가</td></tr></tbody></table></div><p>Lg를 절반으로 줄이자 DIBL, V<sub>th</sub> 하락, SS, 누설전류가 모두 같은 방향으로 나빠졌습니다. 이것이 게이트 제어력 약화에 따른 전형적인 SCE 악화이며, 2단계에서 대책을 적용할 필요성을 보여줍니다.</p><h4>6.4 2단계: High-K 적용의 영향 (Lg = 50 nm)</h4><p><b>DIBL (전 조건)</b></p><div class="tbl-wrap"><table class="" style="min-width:640px"><thead><tr><th>Lg</th><th>유전체</th><th class=num>V<sub>th,CC</sub><br>(0.05 V)</th><th class=num>V<sub>th,CC</sub><br>(1.0 V)</th><th class=num>DIBL<br>(V<sub>th,CC</sub>)</th><th class=num>V<sub>tgm</sub><br>(0.05 V)</th><th class=num>V<sub>tgm</sub><br>(1.0 V)</th><th class=num>DIBL<br>(V<sub>tgm</sub>, 참고)</th></tr></thead><tbody><tr><td>100 nm</td><td>SiO<sub>2</sub></td><td class=num>0.5526</td><td class=num>0.5271</td><td class=num><b>26.9</b></td><td class=num>0.6595</td><td class=num>0.6699</td><td class=num>-11.0</td></tr><tr><td>50 nm</td><td>SiO<sub>2</sub></td><td class=num>0.4989</td><td class=num>0.4263</td><td class=num><b>76.4</b></td><td class=num>0.6286</td><td class=num>0.5960</td><td class=num>34.3</td></tr><tr><td>50 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>0.3517</td><td class=num>0.3251</td><td class=num><b>28.1</b></td><td class=num>0.4606</td><td class=num>0.4730</td><td class=num>-13.0</td></tr><tr class="hl"><td>50 nm</td><td>HfO<sub>2</sub></td><td class=num>0.3571</td><td class=num>0.3474</td><td class=num><b>10.3</b></td><td class=num>0.4629</td><td class=num>0.4710</td><td class=num>-8.4</td></tr><tr><td>100 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>0.3759</td><td class=num>0.3603</td><td class=num><b>16.5</b></td><td class=num>0.4726</td><td class=num>0.5092</td><td class=num>-38.6</td></tr><tr><td>100 nm</td><td>HfO<sub>2</sub></td><td class=num>0.3736</td><td class=num>0.3658</td><td class=num><b>8.2</b></td><td class=num>0.4743</td><td class=num>0.4939</td><td class=num>-20.6</td></tr></tbody></table></div><p class="small">계산식: DIBL = (V<sub>th,lin</sub> − V<sub>th,sat</sub>) / (1.0 − 0.05) × 1000. 예) SiO<sub>2</sub> 50 nm = (0.4989 − 0.4263) / 0.95 × 1000 = 76.4 mV/V</p><ul><li>정전류 방식(V<sub>th,CC</sub>) DIBL은 모든 조건에서 양수이며 Lg 축소·유전율 증가에 대해 일관된 경향을 보입니다.</li><li>Lg = 50 nm에서 DIBL은 SiO<sub>2</sub> 76.4 → Al<sub>2</sub>O<sub>3</sub> 28.1 → HfO<sub>2</sub> 10.3 mV/V로 낮아집니다.</li><li>Al<sub>2</sub>O<sub>3</sub> 50 nm의 DIBL(28.1)은 SiO<sub>2</sub> 100 nm(26.9)와 비슷하고, HfO<sub>2</sub> 50 nm(10.3)는 그보다도 낮습니다. 즉 High-K 적용으로 <b>Lg 축소로 잃은 SCE 성능을 회복하거나 넘어섰습니다.</b></li><li>Lg = 100 nm에서도 High-K가 DIBL을 낮추지만(26.9 → 16.5 → 8.2), 절대 개선 폭은 50 nm에서 훨씬 큽니다. 짧은 채널일수록 게이트 제어력 향상의 효과가 크다는 뜻입니다.</li><li>V<sub>tgm</sub>(gm 최대점) 기반 DIBL은 일부 조건에서 음수로 나와 물리적으로 해석하기 어렵습니다. 고V<sub>d</sub>에서 이동도 저하·직렬저항 영향으로 gm 최대점이 이동하는 것이 원인으로 추정되며, 그래서 주 지표로는 V<sub>th,CC</sub>를 사용하고 V<sub>tgm</sub> 기반 값은 참고용으로만 병기했습니다. 두 방식 모두 “SiO<sub>2</sub> 50 nm가 가장 나쁘고 HfO<sub>2</sub>가 가장 좋다”는 순서는 동일합니다.</li></ul><p><b>주요 지표 (전 조건)</b></p><div class="tbl-wrap"><table class="" style="min-width:860px"><thead><tr><th>Lg</th><th>유전체</th><th class=num>V<sub>d</sub> (V)</th><th class=num>V<sub>tgm</sub> (V)</th><th class=num>SS<br>(mV/dec)</th><th class=num>I<sub>dmax</sub><br>(A/µm)</th><th class=num>gm (S)</th><th class=num>I<sub>on</sub><br>(A/µm)</th><th class=num>I<sub>off</sub><br>(A/µm)</th><th class=num>I<sub>on</sub>/I<sub>off</sub></th></tr></thead><tbody><tr><td>100 nm</td><td>SiO<sub>2</sub></td><td class=num>0.05</td><td class=num>0.660</td><td class=num>63.94</td><td class=num>3.35×10<sup>−5</sup></td><td class=num>1.60×10<sup>−4</sup></td><td class=num>3.35×10<sup>−5</sup></td><td class=num>1.09×10<sup>−10</sup></td><td class=num>3.07×10<sup>5</sup></td></tr><tr><td>100 nm</td><td>SiO<sub>2</sub></td><td class=num>1.0</td><td class=num>0.670</td><td class=num>63.31</td><td class=num>9.82×10<sup>−5</sup></td><td class=num>3.24×10<sup>−4</sup></td><td class=num>9.82×10<sup>−5</sup></td><td class=num>3.72×10<sup>−10</sup></td><td class=num>2.64×10<sup>5</sup></td></tr><tr><td>100 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>0.05</td><td class=num>0.473</td><td class=num>62.26</td><td class=num>4.75×10<sup>−5</sup></td><td class=num>1.29×10<sup>−4</sup></td><td class=num>4.75×10<sup>−5</sup></td><td class=num>4.94×10<sup>−11</sup></td><td class=num>9.63×10<sup>5</sup></td></tr><tr><td>100 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>1.0</td><td class=num>0.509</td><td class=num>62.34</td><td class=num>1.52×10<sup>−4</sup></td><td class=num>3.24×10<sup>−4</sup></td><td class=num>1.52×10<sup>−4</sup></td><td class=num>4.17×10<sup>−10</sup></td><td class=num>3.65×10<sup>5</sup></td></tr><tr><td>100 nm</td><td>HfO<sub>2</sub></td><td class=num>0.05</td><td class=num>0.474</td><td class=num>60.36</td><td class=num>5.76×10<sup>−5</sup></td><td class=num>2.10×10<sup>−4</sup></td><td class=num>5.76×10<sup>−5</sup></td><td class=num>3.81×10<sup>−11</sup></td><td class=num>1.51×10<sup>6</sup></td></tr><tr><td>100 nm</td><td>HfO<sub>2</sub></td><td class=num>1.0</td><td class=num>0.494</td><td class=num>60.46</td><td class=num>1.86×10<sup>−4</sup></td><td class=num>4.04×10<sup>−4</sup></td><td class=num>1.86×10<sup>−4</sup></td><td class=num>1.13×10<sup>−10</sup></td><td class=num>1.65×10<sup>6</sup></td></tr><tr><td>50 nm</td><td>SiO<sub>2</sub></td><td class=num>0.05</td><td class=num>0.629</td><td class=num>71.49</td><td class=num>4.08×10<sup>−5</sup></td><td class=num>1.81×10<sup>−4</sup></td><td class=num>4.08×10<sup>−5</sup></td><td class=num>3.67×10<sup>−10</sup></td><td class=num>1.11×10<sup>5</sup></td></tr><tr><td>50 nm</td><td>SiO<sub>2</sub></td><td class=num>1.0</td><td class=num>0.596</td><td class=num>69.68</td><td class=num>1.13×10<sup>−4</sup></td><td class=num>3.30×10<sup>−4</sup></td><td class=num>1.13×10<sup>−4</sup></td><td class=num>1.36×10<sup>−9</sup></td><td class=num>8.27×10<sup>4</sup></td></tr><tr><td>50 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>0.05</td><td class=num>0.461</td><td class=num>65.36</td><td class=num>5.51×10<sup>−5</sup></td><td class=num>1.58×10<sup>−4</sup></td><td class=num>5.50×10<sup>−5</sup></td><td class=num>1.57×10<sup>−10</sup></td><td class=num>3.52×10<sup>5</sup></td></tr><tr><td>50 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>1.0</td><td class=num>0.473</td><td class=num>65.63</td><td class=num>1.65×10<sup>−4</sup></td><td class=num>3.26×10<sup>−4</sup></td><td class=num>1.65×10<sup>−4</sup></td><td class=num>4.40×10<sup>−10</sup></td><td class=num>3.75×10<sup>5</sup></td></tr><tr><td>50 nm</td><td>HfO<sub>2</sub></td><td class=num>0.05</td><td class=num>0.463</td><td class=num>61.49</td><td class=num>6.18×10<sup>−5</sup></td><td class=num>2.35×10<sup>−4</sup></td><td class=num>6.18×10<sup>−5</sup></td><td class=num>8.10×10<sup>−11</sup></td><td class=num>7.64×10<sup>5</sup></td></tr><tr><td>50 nm</td><td>HfO<sub>2</sub></td><td class=num>1.0</td><td class=num>0.471</td><td class=num>61.60</td><td class=num>1.94×10<sup>−4</sup></td><td class=num>3.93×10<sup>−4</sup></td><td class=num>1.94×10<sup>−4</sup></td><td class=num>1.18×10<sup>−10</sup></td><td class=num>1.64×10<sup>6</sup></td></tr></tbody></table></div><p class="small">I<sub>on</sub>은 V<sub>g</sub> = 1.0 V(스윕 상한)에서, I<sub>off</sub>는 V<sub>g</sub> = V<sub>tgm</sub> − 0.3 V에서 읽은 값입니다.</p><ul><li><b>SS.</b> HfO<sub>2</sub>(61.5)가 이론 하한 60 mV/dec에 가장 가깝습니다. 게이트 용량이 커져 C<sub>d</sub>/C<sub>ox</sub> 항이 줄어든 결과와 부합합니다.</li><li><b>I<sub>on</sub>, I<sub>dmax</sub>, gm.</b> 대체로 High-K 조건에서 더 크고 HfO<sub>2</sub>에서 가장 큽니다(V<sub>d</sub> 1.0 V의 gm은 SiO<sub>2</sub>와 Al<sub>2</sub>O<sub>3</sub>가 거의 같습니다). 다만 High-K 조건은 V<sub>th</sub>도 낮아(약 0.46 V vs SiO<sub>2</sub> 0.63 V) 같은 V<sub>g</sub> = 1.0 V에서 오버드라이브가 더 크므로, 이 차이의 일부는 V<sub>th</sub> 이동에서 옵니다.</li><li><b>I<sub>on</sub>/I<sub>off</sub>.</b> V<sub>th</sub> 기준(V<sub>tgm</sub> − 0.3 V)으로 I<sub>off</sub>를 읽어 소자 간 V<sub>th</sub> 차이를 보정했습니다. Lg = 50 nm, V<sub>d</sub> = 1.0 V에서 SiO<sub>2</sub> 8.3×10<sup>4</sup> → Al<sub>2</sub>O<sub>3</sub> 3.7×10<sup>5</sup> → HfO<sub>2</sub> 1.6×10<sup>6</sup>로 High-K에서 스위칭 품질이 좋아집니다. 절대 전압(V<sub>g</sub> = 0 V)으로 읽으면 V<sub>th</sub>가 다른 소자를 같은 조건에서 비교하지 못해 비율이 10<sup>8</sup> ~ 10<sup>9</sup>로 과대평가되던 문제가 있어 이 방식으로 바꿨습니다.</li><li><b>V<sub>g</sub> = 0 V 누설.</b> 아래 표처럼 절대 전압 기준 누설은 High-K 쪽이 오히려 큽니다. High-K 조건의 V<sub>th</sub>가 낮아졌기 때문이며, 실제 적용 시에는 게이트 일함수 조정 등으로 V<sub>th</sub>를 다시 맞춰야 함을 시사합니다.</li></ul><div class="tbl-wrap"><table class="" style="min-width:560px"><thead><tr><th>Lg</th><th>유전체</th><th class=num>V<sub>tgm</sub> (V<sub>d</sub> 0.05 V)</th><th class=num>I<sub>off</sub> @ V<sub>g</sub> = 0 V<br>(V<sub>d</sub> 0.05 V)</th><th class=num>I<sub>off</sub> @ V<sub>g</sub> = 0 V<br>(V<sub>d</sub> 1.0 V)</th></tr></thead><tbody><tr><td>100 nm</td><td>SiO<sub>2</sub></td><td class=num>0.660 V</td><td class=num>4.04×10<sup>−16</sup> A/µm</td><td class=num>7.85×10<sup>−16</sup> A/µm</td></tr><tr><td>100 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>0.473 V</td><td class=num>1.34×10<sup>−13</sup> A/µm</td><td class=num>2.09×10<sup>−13</sup> A/µm</td></tr><tr><td>100 nm</td><td>HfO<sub>2</sub></td><td class=num>0.474 V</td><td class=num>9.21×10<sup>−14</sup> A/µm</td><td class=num>1.10×10<sup>−13</sup> A/µm</td></tr><tr><td>50 nm</td><td>SiO<sub>2</sub></td><td class=num>0.629 V</td><td class=num>1.69×10<sup>−14</sup> A/µm</td><td class=num>1.18×10<sup>−13</sup> A/µm</td></tr><tr><td>50 nm</td><td>Al<sub>2</sub>O<sub>3</sub></td><td class=num>0.461 V</td><td class=num>5.30×10<sup>−13</sup> A/µm</td><td class=num>1.48×10<sup>−12</sup> A/µm</td></tr><tr><td>50 nm</td><td>HfO<sub>2</sub></td><td class=num>0.463 V</td><td class=num>1.94×10<sup>−13</sup> A/µm</td><td class=num>2.88×10<sup>−13</sup> A/µm</td></tr></tbody></table></div><h4>6.5 종합</h4><div class="tbl-wrap"><table class="" style="min-width:520px"><thead><tr><th>항목</th><th>결과</th></tr></thead><tbody><tr><td>Lg 축소 (SiO<sub>2</sub>, 100 → 50 nm)</td><td>DIBL 2.8배, V<sub>th</sub> 54 mV 하락, SS 악화, V<sub>g</sub> = 0 V 누설 증가</td></tr><tr><td>High-K 적용 (50 nm)</td><td>DIBL SiO<sub>2</sub> 대비 Al<sub>2</sub>O<sub>3</sub> 63%, HfO<sub>2</sub> 87% 감소</td></tr><tr><td>종합 최우수</td><td>HfO<sub>2</sub> (DIBL, SS, I<sub>on</sub>/I<sub>off</sub>, I<sub>on</sub>, gm 모두 최상)</td></tr></tbody></table></div><h3 id="s07"><span class="n">07</span>결론</h3><div class="callout"><ol><li><b>게이트 길이 축소는 SCE를 악화시킨다.</b> SiO<sub>2</sub> 소자에서 Lg를 100 nm에서 50 nm로 줄이자 DIBL이 26.9 → 76.4 mV/V로 늘고, V<sub>th</sub>가 54 mV 하락하고, SS와 누설전류가 모두 나빠졌습니다.</li><li><b>High-K는 유전체 물리 두께를 바꾸지 않고도 SCE를 크게 완화한다.</b> Lg = 50 nm에서 유전체를 Al<sub>2</sub>O<sub>3</sub>, HfO<sub>2</sub>로 바꾸자 DIBL이 각각 63%, 87% 감소했고, 이는 SiO<sub>2</sub> 100 nm 소자와 같거나 더 나은 수준입니다.</li><li><b>최적 소재는 HfO<sub>2</sub>이다.</b> 유전율이 가장 높은 HfO<sub>2</sub>가 DIBL, SS, I<sub>on</sub>/I<sub>off</sub>, 구동전류에서 모두 가장 우수했습니다. 초미세 소자에서 SCE를 억제하려면 게이트 유전체의 유전율 제어, 곧 High-K 도입이 핵심 수단임을 시뮬레이션으로 확인했습니다.</li></ol></div><h3 id="s08"><span class="n">08</span>한계와 향후 과제</h3><div class="tbl-wrap"><table class="wide" style="min-width:640px"><thead><tr><th>한계</th><th>영향</th><th>향후 과제</th></tr></thead><tbody><tr><td><b>유전체와 게이트 전극이 함께 변경됨</b> (SiO<sub>2</sub> = Poly-Si, High-K = TiN). 일함수도 별도로 지정하지 않음</td><td>V<sub>th</sub> 이동(약 0.17 V)과 DIBL 개선을 유전율 효과만으로 귀속할 수 없음</td><td>동일한 게이트 전극에서 유전체만 바꾼 대조 실험, 일함수 명시(WorkFunction)로 V<sub>th</sub> 정렬 후 재비교</td></tr><tr><td><b>유전율을 코드에서 직접 지정하지 않음.</b> SDevice 재료 파라미터에 의존하며 Al<sub>2</sub>O<sub>3</sub>는 내부 대체 재료명으로 등록</td><td>실제 적용된 ε를 확인해야 결과를 유전율과 정량적으로 연결할 수 있음</td><td>SDevice 로그·파라미터 출력으로 재료별 ε 확인, 필요 시 Epsilon 명시</td></tr><tr><td>양자 구속·게이트 터널링 모델 미사용</td><td>2.4 nm 유전체의 게이트 누설과 5 nm 박막의 양자 효과가 반영되지 않아 SiO<sub>2</sub>의 누설이 과소평가될 수 있음</td><td>터널링·양자 보정 모델 추가, EOT를 맞춘 비교</td></tr><tr><td>I<sub>on</sub>을 V<sub>g</sub> = 1.0 V(스윕 상한)에서 읽음</td><td>V<sub>th</sub>가 높은 SiO<sub>2</sub>는 오버드라이브가 작아 I<sub>on</sub>이 불리하게 보일 수 있음</td><td>스윕 상한을 1.5 V로 늘려 V<sub>tgm</sub> + 0.7 V에서 I<sub>on</sub> 추출</td></tr><tr><td>Lg 2점(50, 100 nm)만 비교</td><td>추세 곡선으로 일반화하기에 점이 적음</td><td>Lg 50 ~ 100 nm 구간을 더 촘촘히 스플릿하여 DIBL 추세 확인</td></tr><tr><td>메시 수렴 테스트 미실시</td><td>수치 오차 정량화 불가</td><td>채널·접합 영역 메시 민감도 평가</td></tr><tr><td>Halo·LDD 등 추가 SCE 억제 공정 미적용</td><td>의도된 변인 통제이나 실제 공정과는 다름</td><td>공정 최적화와 High-K를 함께 적용한 시너지 확인</td></tr></tbody></table></div><h3 id="s09"><span class="n">09</span>트러블슈팅 기록</h3><div class="tbl-wrap"><table class="wide" style="min-width:640px"><thead><tr><th>증상</th><th>원인</th><th>해결</th></tr></thead><tbody><tr><td>SProcess 문법 검사 실패: <code>space required after &#39;=&#39;</code></td><td>refinebox의 <code>xrefine={...}</code> 중괄호 표기</td><td><code>xrefine="a b c"</code> 큰따옴표 표기로 변경</td></tr><tr><td>SDevice 실패: <code>Cannot open parameter file</code></td><td>존재하지 않는 Parameter 파일 경로 지정</td><td>Parameter 줄 삭제, 내장 파라미터 사용</td></tr><tr><td>SVisual이 라이브러리 로딩 후 멈춤, 결과 컬럼 비어 있음</td><td><code>load_file @[relpath ...]@</code> 형태가 파일을 찾지 못함</td><td>파일명을 직접 지정 <code>load_file "IdVg_n@node|sdevice@_des.plt"</code></td></tr><tr><td>SDevice가 Al<sub>2</sub>O<sub>3</sub> 재료명을 인식하지 못함</td><td>T-2022.03의 재료명 지원 범위</td><td>내부 대체 재료명으로 등록해 우회</td></tr><tr><td>SVisual 일부 명령 미지원</td><td>버전 제약</td><td>전류 절댓값은 <code>ext::AbsList</code>로 처리</td></tr><tr><td>I<sub>on</sub>/I<sub>off</sub>가 10<sup>8</sup> ~ 10<sup>9</sup>로 비현실적</td><td>V<sub>th</sub>가 다른 소자를 같은 V<sub>g</sub>(0 / 1.0 V)에서 읽음</td><td>V<sub>tgm</sub> 기준 오버드라이브(−0.3 / +0.7 V)로 재추출 → 10<sup>5</sup> ~ 10<sup>6</sup></td></tr><tr><td>V<sub>tgm</sub> 기반 DIBL이 음수</td><td>고V<sub>d</sub>에서 gm 최대점 이동</td><td>정전류 V<sub>th</sub>(V<sub>th,CC</sub>) 기반 DIBL을 주 지표로 채택</td></tr></tbody></table></div><h3 id="s10"><span class="n">10</span>재현 방법</h3><ol><li>Sentaurus Workbench에서 새 프로젝트를 만들고 SProcess → SDevice → SVisual 노드를 순서대로 연결합니다.</li><li>각 노드에 위 코드를 붙여 넣고 저장합니다.</li><li>파라미터를 등록합니다: <code>Lg</code> = 0.1, 0.05 (µm) · <code>HighK</code> = Oxide, Al<sub>2</sub>O<sub>3</sub>, HfO<sub>2</sub> · <code>Vd</code> = 0.05, 1.0 (V)</li><li>12개 실험을 모두 실행합니다. Lg별로 V<sub>d</sub> = 1.0 V 노드들을 선택해 <i>Run selected Visualizer Nodes Together</i>를 실행하면 재료별 Id–Vg를 한 그래프에 겹쳐 볼 수 있습니다.</li><li>추출값(V<sub>tgm</sub>, SS, I<sub>on</sub>, I<sub>off</sub>, V<sub>th,CC</sub> 등)은 SWB 결과 컬럼에서 확인하고, 03 이론의 식으로 DIBL을 계산합니다.</li></ol><h4>참고문헌</h4><ol class="refs"><li>D. A. Neamen, <i>Semiconductor Physics and Devices</i>, McGraw-Hill.</li><li>Y. Taur and T. H. Ning, <i>Fundamentals of Modern VLSI Devices</i>, Cambridge University Press.</li><li>G. D. Wilk, R. M. Wallace, J. M. Anthony, “High-κ gate dielectrics: Current status and materials properties considerations,” <i>J. Appl. Phys.</i> 89, 5243 (2001).</li><li>Synopsys, <i>Sentaurus Process / Sentaurus Device / Sentaurus Visual User Guide</i>, T-2022.03.</li></ol>
+  </article>
+
+  <p class="report-end"><a class="btn-link" href="projects.html#high-k">&larr; Back to Projects</a></p>
+
+</main>
+
+<footer>
+  <span>Junha Kim · Soongsil University</span><span>2026</span>
+</footer>
+
+</body>
+</html>
