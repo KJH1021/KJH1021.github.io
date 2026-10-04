@@ -324,36 +324,42 @@
     </p>
   </section>
 
-  <!-- ============ 1. Ion implantation angle ============ -->
-  <section class="project">
+  <!-- ============ 1. Ion implantation ============ -->
+  <section class="project" id="ion-implant">
     <div class="project-top">
-      <p class="kicker">Sentaurus TCAD · Device Simulation</p>
-      <span class="status">To be updated</span>
+      <p class="kicker">Sentaurus TCAD · Process Simulation</p>
+      <span class="status live">Completed · 2025-12</span>
     </div>
 
     <h2>
-      Ion Implantation Angle Optimization in CMOS
-      <span class="ko">CMOS 소자의 이온주입 각도 최적화</span>
+      Ion Implantation and Annealing: Energy, Tilt and Temperature
+      <span class="ko">이온주입 에너지 · tilt 각도 · 열처리 온도에 따른 도핑 프로파일 분석</span>
     </h2>
 
     <p class="lead">
-      Investigating how the implantation tilt angle shapes the doping profile and, in turn,
-      the electrical behaviour of a CMOS device.
+      Three independent Sentaurus Process experiments on how implant energy, tilt angle and anneal
+      temperature shape dopant profiles and junction depth &mdash; including axial channeling at
+      0&deg; tilt and a transient-enhanced-diffusion signature in short anneals.
     </p>
 
     <ul class="meta">
-      <li><span class="k">Type</span><span class="v">Device simulation</span></li>
-      <li><span class="k">Variable</span><span class="v">Implantation tilt angle</span></li>
-      <li><span class="k">Output</span><span class="v">Doping profile, junction formation, device characteristics</span></li>
+      <li><span class="k">Type</span><span class="v">Process simulation &middot; team coursework (5 members)</span></li>
+      <li><span class="k">Period</span><span class="v">2025.09 &ndash; 2025.12</span></li>
+      <li><span class="k">Variables</span><span class="v">S/D implant energy 10 / 50 / 100&nbsp;keV &middot; tilt 0&ndash;10&deg; &middot; anneal 600&ndash;950&nbsp;&deg;C</span></li>
+      <li><span class="k">Implant</span><span class="v">B 1&times;10<sup>14</sup>&nbsp;cm<sup>&minus;2</sup>, 30&nbsp;keV into n-type Si (tilt and temperature series)</span></li>
+      <li><span class="k">Output</span><span class="v">Depth profiles, junction depth x<sub>j</sub>, peak depth x<sub>p</sub></span></li>
+      <li><span class="k">Result</span><span class="v">0&deg; tilt pushes the B peak from ~0.11 to ~0.24&nbsp;&micro;m (channeling); x<sub>j</sub> is deepest at 800&ndash;850&nbsp;&deg;C, not at 950&nbsp;&deg;C &mdash; far beyond equilibrium diffusion, consistent with TED</span></li>
     </ul>
 
     <ul class="tools">
       <li>Sentaurus Process</li>
-      <li>Sentaurus Device</li>
       <li>SVisual</li>
+      <li>Tcl</li>
     </ul>
 
-    <p class="pending">Simulation figures, results and repository link — To be updated</p>
+    <p class="lead">
+      <a class="btn-link" href="ion-implant.html" target="_blank" rel="noopener">View full write-up (한국어) <span aria-hidden="true">↗</span><span class="sr-only">(opens in a new tab)</span></a>
+    </p>
   </section>
 
   <!-- ============ 2. High-k / SCE ============ -->
