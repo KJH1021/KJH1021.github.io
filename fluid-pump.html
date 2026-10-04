@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gas Station Pump Flow Optimization | Junha Kim</title>
+<meta name="description" content="주유소 Complex Piping System의 펌프 동력 해석과 MLP 기반 시간대별 유속 최적화를 통한 전력 절감 — 화공유체역학 팀 프로젝트 상세 보고. Junha Kim.">
+<style>
+:root{--ink:#1d2329;--sub:#5b6570;--line:#e3e7eb;--bg:#fff;--soft:#f5f7f9;--acc:#1f5f8b;--accsoft:#e8f1f7}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.75;font-size:16px}
+a{color:var(--acc)}
+header.nav{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(255,255,255,.96);z-index:5}
+header.nav .in{max-width:960px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+header.nav .brand{font-weight:700;text-decoration:none;color:var(--ink)}
+header.nav nav a{margin-left:16px;text-decoration:none;color:var(--sub);font-size:15px}
+header.nav nav a.on{color:var(--acc);font-weight:600}
+main{max-width:860px;margin:0 auto;padding:28px 20px 80px}
+.back{font-size:14px;text-decoration:none}
+.kicker{color:var(--acc);font-size:14px;font-weight:600;margin-top:28px}
+h1{font-size:30px;line-height:1.3;margin:6px 0 4px}
+h1 .ko{display:block;font-size:19px;font-weight:500;color:var(--sub);margin-top:6px}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:22px 0 26px}
+.toc a{border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:14px;text-decoration:none;color:var(--ink)}
+.toc a b{color:var(--acc);margin-right:5px}
+.lead{background:var(--soft);border-left:3px solid var(--acc);padding:14px 18px;border-radius:0 6px 6px 0}
+h2{font-size:23px;margin:56px 0 14px;padding-top:12px;border-top:1px solid var(--line)}
+h2 .n{color:var(--acc);margin-right:8px}
+h3{font-size:18px;margin:32px 0 10px}
+h4{font-size:16px;margin:22px 0 6px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin:12px 0 6px}
+.tw{overflow-x:auto}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600;white-space:nowrap}
+td.r,th.r{text-align:right}
+tr.hl td{background:var(--accsoft);font-weight:600}
+.eq{font-family:"Cambria Math","Times New Roman",serif;font-size:17px;background:var(--soft);padding:10px 16px;border-radius:6px;margin:10px 0;overflow-x:auto;white-space:nowrap}
+.note{color:var(--sub);font-size:14px}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0}
+.flow span{border:1px solid var(--acc);color:var(--acc);border-radius:6px;padding:6px 10px;font-size:14px;background:#fff}
+.flow i{color:var(--sub);font-style:normal}
+pre{background:#f6f8fa;border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto;font-size:13px;line-height:1.55}
+code{font-family:"JetBrains Mono",Consolas,monospace;font-size:.92em}
+figure{margin:18px 0}
+figcaption{font-size:13.5px;color:var(--sub);margin-top:6px}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+footer{border-top:1px solid var(--line);text-align:center;color:var(--sub);font-size:14px;padding:22px}
+@media(max-width:600px){h1{font-size:24px}header.nav nav a{margin-left:10px;font-size:14px}}
+</style>
+</head>
+<body>
+<header class="nav"><div class="in">
+<a class="brand" href="index.html">Junha Kim</a>
+<nav><a href="index.html">Home</a><a href="skills.html">Skills</a><a class="on" href="projects.html">Projects</a><a href="research.html">Research</a><a href="activities.html">Activities</a><a href="contact.html">Contact</a></nav>
+</div></header>
+
+<main>
+<a class="back" href="projects.html#fluid-pump">← Back to Projects</a>
+<div class="kicker">Chemical Engineering Fluid Mechanics · Optimization · Machine Learning</div>
+<h1>Flow-Rate Optimization of a Gas Station Fuel Pump System<span class="ko">주유소 펌프 시스템의 유속 최적화를 통한 전력 절감</span></h1>
+
+<div class="toc">
+<a href="#s01"><b>01</b>요약</a><a href="#s02"><b>02</b>배경</a><a href="#s03"><b>03</b>이론</a><a href="#s04"><b>04</b>시스템 모델링</a><a href="#s05"><b>05</b>계산·코드</a><a href="#s06"><b>06</b>결과</a><a href="#s07"><b>07</b>결론</a><a href="#s08"><b>08</b>한계</a><a href="#s09"><b>09</b>트러블슈팅</a><a href="#s10"><b>10</b>재현 방법</a>
+</div>
+
+<p class="lead">지하유류탱크(UST)에서 디스펜서 4대로 휘발유를 보내는 주유소 배관을 <b>Complex Piping System</b>으로 모델링하고, 일반화된 베르누이 방정식(GBE)과 Fanning 마찰계수로 유속별 펌프 전력을 계산했습니다. 이 계산을 엑셀 계산기와 유속 스윕 데이터로 만든 뒤, 시간대별 혼잡도를 입력받아 <b>주유시간과 전력의 가중 비용을 최소화하는 노즐 유속</b>을 출력하는 다층 퍼셉트론(MLP)을 학습시켜, 시간대별 펌프 제어에 따른 연간 전력비 절감액을 산정했습니다. (숭실대학교 화공유체역학 팀 프로젝트, 4인, 2026.05 – 2026.06)</p>
+
+<!-- ============ 01 ============ -->
+<h2 id="s01"><span class="n">01</span>프로젝트 요약</h2>
+<p><b>질문.</b> 주유소 펌프는 하루 종일 같은 유속으로 운전된다. 손님이 적은 시간대에 유속을 낮추면 주유시간은 늘지만 마찰손실이 줄어 전력이 크게 줄어든다. 그렇다면 시간대마다 어떤 유속이 최적이고, 그로 인해 1년에 얼마를 아낄 수 있는가?</p>
+<p><b>접근.</b></p>
+<ol>
+<li><b>물리 모델</b> — 실제 주유소 도면을 참고해 UST → STP 펌프 → 매설관(2″) → 디스펜서·노즐(17 mm) 배관망을 노드·구간으로 나누고, 구간마다 Reynolds 수 → Fanning 마찰계수 → 마찰손실을 구한 뒤 기계적 에너지 수지로 펌프 일과 전력을 계산했습니다.</li>
+<li><b>데이터 생성</b> — 이 계산을 수식 기반 엑셀 계산기로 만들고, 노즐 유속 0.05 – 2.40 m/s를 0.05 간격으로 훑는 <b>유속–전력 스윕 테이블(48점)</b>을 생성했습니다.</li>
+<li><b>최적화 + 머신러닝</b> — 주유시간과 전력을 0 – 1로 정규화한 가중합 비용함수를 정의하고, 가중치 w별 최적 유속을 학습 데이터로 만들어 MLP(1–50–50–1)를 학습시켰습니다. 서울 동작구 주유소의 시간대별 매출 건수 비율을 w로 변환해 시간대별 최적 유속을 추론했습니다.</li>
+<li><b>경제성</b> — 시간대별 전력 절감량 × 운영시간 × 시간대별 전기요금으로 월·연간 절감액을 계산하고 전국 주유소 수로 확장했습니다.</li>
+</ol>
+
+<div class="tw"><table>
+<tr><th>항목</th><th class="r">현재 (정속 2.385 m/s)</th><th class="r">MLP 시간대별 제어</th><th>비고</th></tr>
+<tr><td>펌프 전력 (4대 동시)</td><td class="r">465.28 W</td><td class="r">73 – 465 W</td><td>시간대별 상이</td></tr>
+<tr><td>월간 펌프 전력비 (1개소)</td><td class="r">39,921원</td><td class="r">23,428원</td><td>−16,493원 (−41.3%)</td></tr>
+<tr><td>연간 절감액 (1개소)</td><td class="r">—</td><td class="r">약 19.8만원</td><td>16,493 × 12</td></tr>
+<tr><td>전국 확장 (10,489개소)</td><td class="r">—</td><td class="r">약 20.8억원/년</td><td>단순 선형 확장</td></tr>
+<tr><td>최대 주유시간 (50 L)</td><td class="r">92 s</td><td class="r">551 s</td><td>제약 600 s(10분) 이내</td></tr>
+</table></div>
+<ul>
+<li>현재 운전점에서 펌프 일의 약 84%(103.1 J/kg / 122.4 J/kg)가 <b>17 mm 노즐·호스 구간의 마찰손실</b>입니다. 2인치 매설관의 마찰은 5 J/kg 수준에 그쳐, 유속 최적화의 효과가 노즐 구간에 집중됩니다.</li>
+<li>마찰손실은 유속의 약 1.75 – 2제곱에 비례하므로, 유속을 절반으로 낮추면 전력은 절반보다 훨씬 크게 줄어듭니다. 이 비선형성이 시간대별 제어가 이득이 되는 근본 이유입니다.</li>
+<li>오후 피크(14 – 18시)는 혼잡도 가중치가 0.99로 시간이 최우선이므로 현재 유속을 유지했습니다.</li>
+</ul>
+
+<!-- ============ 02 ============ -->
+<h2 id="s02"><span class="n">02</span>배경과 문제 정의</h2>
+<p>국제 유가와 전기요금이 함께 오르면서 주유소의 운영비 절감 수요가 커지고 있습니다. 주유소의 지하탱크 펌프(STP, Submersible Turbine Pump)는 보통 정속으로 운전되어, 손님이 거의 없는 새벽·심야에도 피크 시간과 같은 유량을 밀어냅니다.</p>
+<p>유체역학적으로 보면 펌프가 해야 하는 일은 (1) 유체를 들어 올리는 <b>위치수두</b>, (2) 배관 벽면의 <b>마찰손실</b>, (3) 관 부속의 <b>부차손실</b>, (4) 출구의 <b>속도수두</b>의 합입니다. 이 중 위치수두는 유속과 무관한 고정 성분이지만, 마찰·부차손실·속도수두는 유속에 따라 급격히 커집니다. 따라서 유속을 조절하면 전력을 줄일 수 있지만, 유속이 낮아질수록 주유시간이 늘어 고객 대기와 주유소 회전율에 불리합니다.</p>
+<p>즉 이 문제는 <b>주유시간과 펌프 전력 사이의 Trade-off</b>이며, 시간대마다 혼잡도가 다르므로 최적점도 시간대마다 다릅니다. 본 프로젝트는 이 Trade-off를 정량화하고 시간대별 최적 유속을 찾는 것을 목표로 했습니다.</p>
+
+<!-- ============ 03 ============ -->
+<h2 id="s03"><span class="n">03</span>이론적 배경</h2>
+
+<h3>3.1 일반화된 베르누이 방정식 (GBE, 기계적 에너지 수지)</h3>
+<p>정상상태 비압축성 유동에서 두 지점 1 → 2 사이의 단위 질량당 기계적 에너지 수지는 다음과 같습니다.</p>
+<div class="eq">Δ(u²/2) + g·Δz + Δp/ρ + W<sub>s</sub> + ℱ = 0 &nbsp;&nbsp;[J/kg]</div>
+<p>여기서 W<sub>s</sub>는 유체가 외부에 한 축일(펌프가 유체에 일을 하면 음수), ℱ는 마찰 등으로 열에너지로 소산된 비가역 손실입니다. 펌프가 유체에 해야 하는 일을 w<sub>pump</sub> = −W<sub>s</sub>로 두면,</p>
+<div class="eq">w<sub>pump</sub> = Δ(u²/2) + g·Δz + Δp/ρ + ℱ<sub>major</sub> + ℱ<sub>minor</sub></div>
+<p>본 시스템은 탱크가 통기관(vent)으로 대기와 연결되어 있고 토출부(차량 주유구)도 대기압이므로 Δp/ρ = 0입니다. 탱크 액면의 유속은 0으로 봅니다.</p>
+<p class="note">면접 포인트: 베르누이 방정식은 이상유체·무손실 가정이지만, GBE는 여기에 펌프 일(W<sub>s</sub>)과 마찰손실(ℱ)을 더해 실제 공정 배관에 쓸 수 있게 확장한 열역학 제1법칙의 기계적 에너지 형태입니다.</p>
+
+<h3>3.2 Reynolds 수와 유동 영역</h3>
+<div class="eq">Re = ρ·u·D / μ = (관성력) / (점성력)</div>
+<div class="tw"><table>
+<tr><th>영역</th><th>Re 범위</th><th>특징</th><th>마찰계수</th></tr>
+<tr><td>층류</td><td>Re &lt; 2,100</td><td>유선이 평행, 포물선 속도분포</td><td>f<sub>F</sub> = 16/Re (해석해)</td></tr>
+<tr><td>천이</td><td>2,100 – 4,000</td><td>층류·난류가 번갈아 나타남</td><td>불확실 (본 프로젝트는 난류식 적용)</td></tr>
+<tr><td>난류</td><td>Re &gt; 4,000</td><td>와류에 의한 혼합, 평평한 속도분포</td><td>Re와 ε/D의 함수 (실험식)</td></tr>
+</table></div>
+<p>현재 노즐 조건(u = 2.385 m/s, D = 17 mm)에서 Re = 702 × 2.385 × 0.017 / 0.0006 ≈ 47,440으로 완전 난류입니다.</p>
+
+<h3>3.3 Fanning 마찰계수와 마찰손실</h3>
+<p>원관 내 유동의 운동량 수지에서 벽면 전단응력 τ<sub>w</sub>와 압력강하의 관계를 얻고, τ<sub>w</sub>를 운동에너지로 무차원화한 것이 Fanning 마찰계수입니다.</p>
+<div class="eq">f<sub>F</sub> = τ<sub>w</sub> / (½ ρ u<sub>m</sub>²) &nbsp;&nbsp;→&nbsp;&nbsp; ℱ<sub>major</sub> = 2 f<sub>F</sub> u<sub>m</sub>² (L / D) &nbsp;=&nbsp; 32 f<sub>F</sub> V̇² L / (π² D⁵)</div>
+<p>오른쪽 형태는 u = 4V̇/(πD²)를 대입한 것으로, 같은 유량에서 마찰손실이 <b>D⁵에 반비례</b>함을 보여줍니다. 매설관(2″)과 노즐(17 mm)의 직경비가 약 3이므로 같은 유량에서 마찰손실은 약 3⁵ ≈ 240배 차이가 납니다. 이것이 손실이 노즐 구간에 몰리는 이유입니다.</p>
+<p class="note">Darcy 마찰계수와의 관계: f<sub>D</sub> = 4 f<sub>F</sub>. 교재(Wilkes)는 Fanning을 쓰므로 모든 계산을 Fanning으로 통일했습니다. (09 트러블슈팅 참고)</p>
+
+<h4>난류 마찰계수 식</h4>
+<div class="eq">Colebrook–White: 1/√f<sub>F</sub> = −4.0 log₁₀( ε/D + 4.67/(Re√f<sub>F</sub>) ) + 2.28</div>
+<p>Colebrook 식은 f가 양변에 있어 반복 계산이 필요하므로, 엑셀 셀 하나로 계산할 수 있는 <b>Shacham 양함수식</b>을 사용했습니다.</p>
+<div class="eq">f<sub>F</sub> = { −1.737 ln[ 0.269 ε/D − (2.185/Re) · ln( 0.269 ε/D + 14.5/Re ) ] }<sup>−2</sup></div>
+<p>HDPE 관(ε = 0.0015 mm)은 ε/D가 10⁻⁵ 수준이라 거의 매끈한 관(hydraulically smooth)에 해당하며, Shacham 결과(노즐 0.00539)는 Moody 차트 판독값(0.0057) 및 Blasius 식 f<sub>F</sub> = 0.0790 Re<sup>−1/4</sup>(0.00535)과 잘 일치합니다.</p>
+
+<h3>3.4 부차손실 — 급축소 (Sudden Contraction)</h3>
+<p>단면이 갑자기 좁아지면 유선이 따라가지 못해 vena contracta(축류)가 생기고, 그 뒤 재확대 과정에서 와류로 에너지가 손실됩니다. 손실은 하류(좁은 쪽) 속도수두에 비례합니다.</p>
+<div class="eq">ℱ<sub>contraction</sub> = K<sub>c</sub> · u<sub>2</sub>² / 2 , &nbsp;&nbsp; K<sub>c</sub> ≈ 0.4 – 0.5 &nbsp;(면적비 A<sub>2</sub>/A<sub>1</sub> → 0일수록 0.5에 접근)</div>
+<p>2″(A<sub>1</sub> = 2.027×10⁻³ m²) → 17 mm(A<sub>2</sub> = 2.270×10⁻⁴ m²)의 면적비는 0.11로 매우 작아, 교재 표의 상한에 해당하는 K<sub>c</sub> = 0.5를 적용했습니다.</p>
+
+<h3>3.5 Complex Piping System (분기 배관망) 해석</h3>
+<p>하나의 펌프에서 나온 유체가 여러 구간으로 갈라지는 배관망은 다음 세 종류의 식을 미지수 수만큼 세워 연립으로 풉니다.</p>
+<ol>
+<li><b>노드의 연속식 (질량 보존)</b> — 비압축성 유체이므로 노드로 들어온 유량 = 나간 유량. 예: V̇<sub>A</sub> = V̇<sub>B</sub> + V̇<sub>C</sub></li>
+<li><b>구간마다의 에너지 수지</b> — 노드 i → j 직관 구간에서 g(z<sub>j</sub>−z<sub>i</sub>) + (p<sub>j</sub>−p<sub>i</sub>)/ρ + 32 f<sub>F</sub> V̇² L/(π² D⁵) = 0</li>
+<li><b>펌프 특성식</b> — 원심펌프의 head–discharge 곡선 Δp = a − bV̇²</li>
+</ol>
+<p>본 시스템은 노즐 유량이 측정값으로 고정되어 있으므로, 연속식으로 각 구간 유량을 먼저 확정하고(유량배수) 가장 먼 경로에 대해 에너지 수지를 적용해 필요한 펌프 일을 구하는 방식으로 단순화했습니다.</p>
+
+<h3>3.6 펌프 동력과 효율, 가변속 운전</h3>
+<div class="eq">ṁ = ρ V̇<sub>total</sub>, &nbsp;&nbsp; P<sub>fluid</sub> = ṁ · w<sub>pump</sub>, &nbsp;&nbsp; P<sub>pump</sub> = P<sub>fluid</sub> / η, &nbsp;&nbsp; H = w<sub>pump</sub> / g</div>
+<p>유속(유량)을 실제로 바꾸려면 밸브로 조이는 방식(throttling)이 아니라 <b>인버터(VFD)로 펌프 회전수를 바꾸는 가변속 운전</b>이 필요합니다. 밸브 조절은 펌프가 만든 압력을 밸브에서 다시 손실로 버리므로 전력 절감 효과가 작습니다. 원심펌프의 상사법칙(Affinity laws)은 다음과 같습니다.</p>
+<div class="eq">V̇ ∝ N, &nbsp;&nbsp; H ∝ N², &nbsp;&nbsp; P ∝ N³</div>
+<p>회전수를 20% 낮추면 동력은 이론상 약 49% 줄어듭니다(0.8³ = 0.512). 본 프로젝트의 "펌프 압력(양정) 조절"은 이 가변속 운전을 전제로 합니다.</p>
+
+<h3>3.7 다목적 최적화 — 가중합 스칼라화</h3>
+<p>주유시간 T(작을수록 좋음)와 전력 P(작을수록 좋음)는 서로 반대 방향으로 움직이므로 하나의 해가 둘을 동시에 최소화할 수 없습니다. 두 목적을 하나의 스칼라 비용으로 묶는 가중합(weighted sum) 방법을 사용했습니다.</p>
+<div class="eq">T̂ = (T − T<sub>min</sub>)/(T<sub>max</sub> − T<sub>min</sub>), &nbsp; P̂ = (P − P<sub>min</sub>)/(P<sub>max</sub> − P<sub>min</sub>)</div>
+<div class="eq">J(u; w) = w · T̂(u) + (1 − w) · P̂(u), &nbsp;&nbsp; u<sub>opt</sub>(w) = argmin<sub>u</sub> J</div>
+<ul>
+<li><b>정규화가 필요한 이유</b> — T는 수백 초, P는 수백 와트로 단위와 크기가 달라, 정규화 없이 더하면 숫자가 큰 쪽이 비용을 지배합니다.</li>
+<li><b>w의 의미</b> — w → 1이면 시간 우선(혼잡 시간대), w → 0이면 전력 우선(한산 시간대). w를 0 → 1로 바꾸며 얻은 u<sub>opt</sub>들은 시간–전력 Pareto 전선 위의 점들입니다.</li>
+</ul>
+
+<h3>3.8 다층 퍼셉트론 (MLP, Multi-Layer Perceptron)</h3>
+<h4>구조와 순전파</h4>
+<p>MLP는 입력층–은닉층–출력층이 완전연결(fully connected)된 인공신경망입니다. 각 층은 이전 층 출력에 가중치 행렬을 곱하고 편향을 더한 뒤 비선형 활성화 함수를 통과시킵니다.</p>
+<div class="eq">h⁽¹⁾ = ReLU(W⁽¹⁾x + b⁽¹⁾), &nbsp; h⁽²⁾ = ReLU(W⁽²⁾h⁽¹⁾ + b⁽²⁾), &nbsp; ŷ = W⁽³⁾h⁽²⁾ + b⁽³⁾</div>
+<div class="tw"><table>
+<tr><th>층</th><th>노드</th><th>내용</th><th class="r">파라미터 수</th></tr>
+<tr><td>입력층</td><td>1</td><td>혼잡도 가중치 w<sub>time</sub> (MinMax 스케일)</td><td class="r">—</td></tr>
+<tr><td>은닉층 1</td><td>50</td><td>ReLU</td><td class="r">1×50 + 50 = 100</td></tr>
+<tr><td>은닉층 2</td><td>50</td><td>ReLU</td><td class="r">50×50 + 50 = 2,550</td></tr>
+<tr><td>출력층</td><td>1</td><td>최적 노즐 유속 u<sub>opt</sub> (항등 함수, 회귀)</td><td class="r">50×1 + 1 = 51</td></tr>
+<tr class="hl"><td colspan="3">총 학습 파라미터</td><td class="r">2,701</td></tr>
+</table></div>
+<h4>활성화 함수 ReLU</h4>
+<div class="eq">ReLU(z) = max(0, z)</div>
+<p>은닉층에 비선형 함수가 없으면 층을 아무리 쌓아도 전체가 하나의 선형 변환이 됩니다. ReLU는 계산이 간단하고 양수 구간의 기울기가 1이라 깊은 망에서도 기울기 소실이 적습니다. ReLU 망은 입력 공간을 여러 구간으로 나눈 <b>구간별 선형 함수</b>를 표현하므로, 본 문제처럼 w에 따라 계단 모양으로 바뀌는 최적 유속을 매끄럽게 근사하는 데 적합합니다.</p>
+<h4>학습: 손실함수, 역전파, Adam</h4>
+<div class="eq">L = (1/N) Σ ( ŷ<sub>i</sub> − y<sub>i</sub> )²  &nbsp; (MSE, 회귀) &nbsp;&nbsp;→&nbsp;&nbsp; θ ← θ − α · ∂L/∂θ</div>
+<ul>
+<li><b>역전파(Backpropagation)</b> — 출력 오차를 연쇄법칙으로 각 층에 거꾸로 전달해 모든 가중치의 기울기 ∂L/∂θ를 한 번에 계산합니다.</li>
+<li><b>Adam 옵티마이저</b> — 기울기의 1차 모멘트(평균, 관성)와 2차 모멘트(분산)를 지수이동평균으로 추적해 파라미터마다 학습률을 자동 조정합니다. 작은 데이터·적은 하이퍼파라미터 튜닝으로도 안정적으로 수렴합니다.</li>
+<li><b>입력 정규화(MinMaxScaler)</b> — 입력을 0 – 1로 맞춰 경사하강의 수렴을 돕습니다.</li>
+<li><b>종료 조건</b> — max_iter = 5000, tol = 1e-5(손실 개선이 이보다 작으면 조기 종료), random_state = 42(가중치 초기화 재현성).</li>
+</ul>
+<h4>왜 MLP를 썼는가</h4>
+<p>가중합 최적화는 스윕 테이블의 이산 격자(0.05 m/s 간격) 위에서만 답을 주고, w도 0.05 간격으로만 계산됩니다. MLP는 이 (w, u<sub>opt</sub>) 쌍을 학습해 <b>임의의 w에 대한 연속적인 u<sub>opt</sub></b>를 즉시 추론하는 대리 모델(surrogate model) 역할을 합니다. 또한 입력을 날씨·요일·대기 차량 수·실시간 전기요금 등으로 확장하면 같은 구조로 다변수 제어기로 발전시킬 수 있습니다. (한계는 08 참고)</p>
+
+<!-- ============ 04 ============ -->
+<h2 id="s04"><span class="n">04</span>시스템 모델링</h2>
+<h3>4.1 배관망 구조</h3>
+<p>Canada Government of Saskatchewan의 실제 주유소 도면(UST 시스템 요구사항)을 참고해 배관망을 구성했습니다.</p>
+<figure>
+<svg viewBox="0 0 760 250" width="100%" role="img" aria-label="주유소 배관망 모식도" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="13">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#1f5f8b" stroke-width="1.6"/></marker></defs>
+<rect x="20" y="140" width="140" height="64" rx="8" fill="#f5f7f9" stroke="#5b6570"/>
+<text x="90" y="166" text-anchor="middle" font-weight="600">UST (지하탱크)</text>
+<text x="90" y="186" text-anchor="middle" fill="#5b6570" font-size="12">STP 펌프 · 액면 −0.6 m</text>
+<rect x="250" y="145" width="90" height="54" rx="8" fill="#e8f1f7" stroke="#1f5f8b"/>
+<text x="295" y="177" text-anchor="middle" font-weight="600">N1</text>
+<rect x="440" y="145" width="90" height="54" rx="8" fill="#e8f1f7" stroke="#1f5f8b"/>
+<text x="485" y="177" text-anchor="middle" font-weight="600">N2</text>
+<rect x="380" y="20" width="200" height="54" rx="8" fill="#fff" stroke="#5b6570"/>
+<text x="480" y="43" text-anchor="middle" font-weight="600">디스펜서 1 · 2</text>
+<text x="480" y="62" text-anchor="middle" fill="#5b6570" font-size="12">17 mm · 6.8 m × 2</text>
+<rect x="580" y="140" width="165" height="64" rx="8" fill="#fff" stroke="#5b6570"/>
+<text x="662" y="166" text-anchor="middle" font-weight="600">디스펜서 3 · 4</text>
+<text x="662" y="186" text-anchor="middle" fill="#5b6570" font-size="12">17 mm · 6.8 m × 2</text>
+<line x1="160" y1="172" x2="246" y2="172" stroke="#1f5f8b" stroke-width="2" marker-end="url(#ar)"/>
+<text x="203" y="162" text-anchor="middle" fill="#1f5f8b">Pipe A · 20 m</text>
+<path d="M295 145 L295 100 L480 100 L480 78" fill="none" stroke="#1f5f8b" stroke-width="2" marker-end="url(#ar)"/>
+<text x="350" y="94" text-anchor="middle" fill="#1f5f8b">Pipe B · 2.1 m</text>
+<line x1="340" y1="172" x2="436" y2="172" stroke="#1f5f8b" stroke-width="2" marker-end="url(#ar)"/>
+<text x="388" y="162" text-anchor="middle" fill="#1f5f8b">Pipe C · 5 m</text>
+<line x1="530" y1="172" x2="576" y2="172" stroke="#1f5f8b" stroke-width="2" marker-end="url(#ar)"/>
+<text x="553" y="225" text-anchor="middle" fill="#1f5f8b">Pipe D · 2.1 m</text>
+<text x="380" y="240" text-anchor="middle" fill="#5b6570" font-size="12">매설관 A·B·C·D: HDPE 2″ (50.8 mm) · 토출: 차량 주유구 +0.5 m</text>
+</svg>
+<figcaption>그림 1. 주유소 배관망 모식도. 최원거리 경로 A → C → D → 디스펜서가 펌프 양정을 결정합니다.</figcaption>
+</figure>
+
+<div class="tw"><table>
+<tr><th>구간</th><th>구성</th><th class="r">L (m)</th><th class="r">D</th><th class="r">유량배수</th></tr>
+<tr><td>Pipe A</td><td>탱크 바닥 → 펌프 수직 2 m + 펌프 → N1 수평 18 m</td><td class="r">20</td><td class="r">2″</td><td class="r">4</td></tr>
+<tr><td>Pipe B</td><td>N1 → 근거리 디스펜서 (수평 1.5 + 수직 0.6) × 2</td><td class="r">2.1 × 2</td><td class="r">2″</td><td class="r">1</td></tr>
+<tr><td>Pipe C</td><td>N1 → N2, 디스펜서 그룹 간격</td><td class="r">5</td><td class="r">2″</td><td class="r">2</td></tr>
+<tr><td>Pipe D</td><td>N2 → 원거리 디스펜서 (수평 1.5 + 수직 0.6) × 2</td><td class="r">2.1 × 2</td><td class="r">2″</td><td class="r">1</td></tr>
+<tr><td>노즐·디스펜서</td><td>디스펜서 내부 수직 2.4 m + 호스 4.4 m (180° 꺾임)</td><td class="r">6.8</td><td class="r">17 mm</td><td class="r">1</td></tr>
+</table></div>
+
+<h3>4.2 입력 데이터</h3>
+<div class="tw"><table>
+<tr><th>항목</th><th class="r">값</th><th>출처</th></tr>
+<tr><td>노즐 1개 유량 V̇</td><td class="r">0.5414 L/s</td><td>주유기 표시값 직접 확인</td></tr>
+<tr><td>노즐 유속 u<sub>n</sub></td><td class="r">2.385 m/s</td><td>직접 측정 (V̇/A로 검산 일치)</td></tr>
+<tr><td>노즐·디스펜서 내경</td><td class="r">17 mm</td><td>직접 측정</td></tr>
+<tr><td>휘발유 밀도 ρ (15 °C)</td><td class="r">702 kg/m³</td><td>대한LPG협회 수송용 연료 물성표</td></tr>
+<tr><td>휘발유 점도 μ</td><td class="r">0.6 mPa·s</td><td>문헌</td></tr>
+<tr><td>HDPE 관 조도 ε</td><td class="r">0.0015 mm</td><td>MST HDPE Piping System</td></tr>
+<tr><td>탱크 매설 깊이 / 지름</td><td class="r">0.6 m / 2 m</td><td>도면·문헌·자문</td></tr>
+<tr><td>차량 주유구 높이 (K5)</td><td class="r">지면 +0.5 m</td><td>차량 제원</td></tr>
+<tr><td>급축소 계수 K<sub>c</sub></td><td class="r">0.5</td><td>면적비 0.11, 교재 표</td></tr>
+<tr><td>펌프 효율 η</td><td class="r">0.4 (최종 계산)</td><td>08 한계 참고</td></tr>
+</table></div>
+
+<h3>4.3 주요 가정</h3>
+<ul>
+<li><b>4대 동시 운전, 정상상태.</b> 총 유량 4 × 0.5414 = 2.166 L/s.</li>
+<li><b>액면 일정.</b> UST 용량 50,000 L 대비 4대 주유량 200 L로 액위 변화 ≈ 0. 탱크는 가득 찬 상태(액면 = 탱크 상단, 지면 −0.6 m).</li>
+<li><b>대기압 경계.</b> 탱크는 통기관으로 대기압 유지, 토출부도 대기압 → Δp/ρ = 0.</li>
+<li><b>순 양정</b> Δz = 0.5 − (−0.6) = <b>1.1 m</b>. 호스 4.4 m의 수직 꺾임은 높이에 반영하지 않고 마찰 길이로만 반영.</li>
+<li><b>손실 항목.</b> 관 마찰(major)과 2″ → 17 mm 급축소만 고려. 엘보·밸브·필터·계량기 손실은 1차 모델에서 제외.</li>
+</ul>
+
+<!-- ============ 05 ============ -->
+<h2 id="s05"><span class="n">05</span>계산 과정과 코드</h2>
+<h3>5.1 전체 워크플로우</h3>
+<div class="flow"><span>도면·현장 측정</span><i>→</i><span>엑셀 계산기<br>Re · f<sub>F</sub> · ℱ · P</span><i>→</i><span>유속 스윕<br>0.05 – 2.40 m/s</span><i>→</i><span>정규화 + 비용함수</span><i>→</i><span>MLP 학습</span><i>→</i><span>시간대별 추론</span><i>→</i><span>월·연간 절감액</span></div>
+
+<h3>5.2 현재 운전점 계산 (u<sub>n</sub> = 2.385 m/s)</h3>
+<h4>STEP 1. 구간별 유속, Reynolds 수, 마찰계수</h4>
+<div class="tw"><table>
+<tr><th>구간</th><th class="r">유량배수</th><th class="r">u (m/s)</th><th class="r">Re</th><th class="r">f<sub>F</sub> (Shacham)</th></tr>
+<tr><td>Pipe A (2″, 20 m)</td><td class="r">4</td><td class="r">1.068</td><td class="r">63,500</td><td class="r">0.00502</td></tr>
+<tr><td>Pipe C (2″, 5 m)</td><td class="r">2</td><td class="r">0.534</td><td class="r">31,750</td><td class="r">0.00584</td></tr>
+<tr><td>Pipe D (2″, 2.1 m)</td><td class="r">1</td><td class="r">0.267</td><td class="r">15,880</td><td class="r">0.00689</td></tr>
+<tr><td>노즐·디스펜서 (17 mm, 6.8 m)</td><td class="r">1</td><td class="r">2.385</td><td class="r">47,440</td><td class="r">0.00539</td></tr>
+</table></div>
+<p class="note">같은 유량이 2″ 관을 지나면 단면적이 8.9배 커서 유속이 1/8.9로 줄어듭니다 (2.385 → 0.267 m/s).</p>
+
+<h4>STEP 2. 구간별 마찰손실 ℱ = 2 f<sub>F</sub> u² L/D</h4>
+<div class="tw"><table>
+<tr><th>구간</th><th>계산</th><th class="r">ℱ (J/kg)</th></tr>
+<tr><td>Pipe A</td><td>2(0.00502)(1.068²)(20/0.0508)</td><td class="r">4.51</td></tr>
+<tr><td>Pipe C</td><td>2(0.00584)(0.534²)(5/0.0508)</td><td class="r">0.33</td></tr>
+<tr><td>Pipe D (4개)</td><td>2(0.00689)(0.267²)(2.1/0.0508) × 4</td><td class="r">0.16</td></tr>
+<tr><td>노즐·디스펜서 (4개)</td><td>2(0.00539)(2.385²)(6.8/0.017) × 4</td><td class="r">98.12</td></tr>
+<tr class="hl"><td colspan="2">구간 마찰 합 Σℱ</td><td class="r">103.12</td></tr>
+</table></div>
+<p>급축소(4개): ℱ<sub>c</sub> = 4 × K<sub>c</sub> u<sub>n</sub>²/2 = 4 × 0.5 × 2.385²/2 = 5.68 J/kg</p>
+
+<h4>STEP 3. 기계적 에너지 수지 → 펌프 일</h4>
+<div class="eq">w<sub>pump</sub> = u<sub>N</sub>²/2 + gΔz + Σℱ + ℱ<sub>c</sub> = 2.844 + 10.79 + 103.12 + 5.68 = 122.43 J/kg</div>
+<div class="tw"><table>
+<tr><th>에너지 항</th><th class="r">J/kg</th><th class="r">비중</th><th>유속 의존성</th></tr>
+<tr><td>노즐부 관마찰</td><td class="r">98.12</td><td class="r">80.1%</td><td>≈ u<sup>1.8</sup></td></tr>
+<tr><td>위치수두 gΔz (1.1 m)</td><td class="r">10.79</td><td class="r">8.8%</td><td>고정</td></tr>
+<tr><td>급축소 손실</td><td class="r">5.68</td><td class="r">4.6%</td><td>u²</td></tr>
+<tr><td>Pipe A 마찰</td><td class="r">4.51</td><td class="r">3.7%</td><td>≈ u<sup>1.8</sup></td></tr>
+<tr><td>출구 속도수두</td><td class="r">2.84</td><td class="r">2.3%</td><td>u²</td></tr>
+<tr><td>Pipe C + D 마찰</td><td class="r">0.49</td><td class="r">0.4%</td><td>≈ u<sup>1.8</sup></td></tr>
+<tr class="hl"><td>합 w<sub>pump</sub></td><td class="r">122.43</td><td class="r">100%</td><td></td></tr>
+</table></div>
+<p>펌프 양정 H = 122.43 / 9.81 = <b>12.48 m</b></p>
+
+<h4>STEP 4. 펌프 전력</h4>
+<div class="eq">ṁ = 702 × 2.166×10⁻³ = 1.520 kg/s, &nbsp; P<sub>fluid</sub> = 1.520 × 122.43 = 186.11 W, &nbsp; P<sub>pump</sub> = 186.11 / 0.4 = <b>465.28 W</b></div>
+
+<h3>5.3 엑셀 계산기와 유속 스윕</h3>
+<p>계산기 시트의 노란 셀(노즐 유속)만 바꾸면 모든 구간의 Re → f<sub>F</sub> → ℱ → 양정 → 전력이 자동 재계산되도록 수식으로 연결했습니다. 마찰계수 셀은 Re &lt; 2,100이면 16/Re, 아니면 Shacham 식을 쓰도록 분기합니다.</p>
+<pre><code>' 마찰계수 (G25, Pipe A 예시)
+=IF(F25&lt;2100, 16/F25,
+   (-1.737*LN(0.269*($B$12/C25)-(2.185/F25)*LN(0.269*($B$12/C25)+14.5/F25)))^(-2))
+
+' 구간 유속 = 유량배수 × 노즐 1개 유량 / 구간 단면적
+=D25*$B$19/(PI()*C25^2/4)
+
+' 펌프 전력 = ρ × 총유량 × w_pump / η
+=B40/B9</code></pre>
+<p><b>유속 스윕</b> 시트는 노즐 유속을 0.05 – 2.40 m/s(48점)로 바꾸며 같은 계산을 행마다 반복하고, 상수는 계산기 시트를 절대참조합니다. 이 표의 (u<sub>n</sub>, P) 열이 MLP 단계의 입력 데이터입니다.</p>
+
+<h3>5.4 MLP 최적화 코드 (Python, Google Colab)</h3>
+<p>핵심 단계는 (1) 주유시간 제약으로 최소 유속 산출, (2) 정규화, (3) w별 argmin으로 학습 데이터 생성, (4) MLP 학습, (5) 시간대별 추론 + 운전 규칙 적용, (6) 절감액 계산입니다.</p>
+<div class="tw"><table>
+<tr><th>단계</th><th>내용</th></tr>
+<tr><td>주유시간 제약</td><td>50 L 차량을 10분(600 s) 내 주유 → Q<sub>min</sub> = 0.05/600 = 8.33×10⁻⁵ m³/s → u<sub>min</sub> = Q<sub>min</sub>/A<sub>n</sub> = <b>0.367 m/s</b>. 이보다 느린 스윕 행은 제외</td></tr>
+<tr><td>학습 데이터</td><td>w = 0, 0.05, …, 1.00 (21개)마다 J = wT̂ + (1−w)P̂의 argmin 유속을 정답으로 사용</td></tr>
+<tr><td>시간대 가중치</td><td>서울 동작구 주유소 시간대별 매출 건수 비율(소상공인365)을 Min-Max 정규화, 극단값 0/1은 0.01/0.99로 보정</td></tr>
+<tr><td>운전 규칙</td><td>w ≥ 0.95(피크)이면 현재 유속 유지, 예측이 현재 유속 이상이면 현재 유속 유지, 데이터 범위로 클리핑</td></tr>
+<tr><td>절감액</td><td>월간 절감 = ΔP[kW] × 운영시간[h] × 30일 × 시간대 전기요금[원/kWh]</td></tr>
+</table></div>
+<pre><code>import numpy as np
+import pandas as pd
+from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import MinMaxScaler
+from google.colab import files
+import warnings
+warnings.filterwarnings('ignore')
+
+# ── 엑셀 업로드 ───────────────────────────────────────────
+print('엑셀 파일을 업로드하세요 (주유소_펌프전력_유속스윕.xlsx)')
+uploaded = files.upload()
+excel_name = list(uploaded.keys())[0]
+
+# ── 고정 파라미터 ─────────────────────────────────────────
+D_n       = 0.017               # m  노즐 내경 (17 mm)
+A_n       = np.pi * D_n**2 / 4  # m² 노즐 단면적
+V_tank    = 0.05                # m³ 차량 연료탱크 (50 L)
+T_LIMIT   = 600                 # s  주유시간 제약 (10분)
+v_current = 2.385               # m/s 현재 측정 유속
+PEAK_THRESHOLD = 0.95           # 혼잡도 이 이상이면 피크 → 현재 유속 유지
+
+# ── 시간 제약 → 최소 노즐 유속 ───────────────────────────
+Q_min = V_tank / T_LIMIT
+u_min = Q_min / A_n
+print(f'\n주유시간 제약: 50L / {T_LIMIT}s ({T_LIMIT//60}분)  →  최소 노즐 유속 = {u_min:.4f} m/s')
+
+# ── 엑셀 '유속 스윕' 시트 로드 ───────────────────────────
+df_raw = pd.read_excel(excel_name, sheet_name='유속 스윕', header=0)
+df_fluid = pd.DataFrame({
+    'velocity': df_raw['노즐유속 u_n'].astype(float),
+    'power_P':  df_raw['P (W)'].astype(float),
+})
+df_fluid['time_T'] = V_tank / (df_fluid['velocity'] * A_n)   # 노즐 1개 기준 주유시간
+df_fluid = df_fluid[df_fluid['velocity'] &gt;= u_min].sort_values('velocity').reset_index(drop=True)
+
+# 보간용 배열 (오름차순 필수)
+vv = df_fluid['velocity'].values
+pp = df_fluid['power_P'].values
+
+# ── 정규화 (0~1 스케일) ───────────────────────────────────
+df_fluid['P_norm'] = (df_fluid['power_P'] - df_fluid['power_P'].min()) / \
+                     (df_fluid['power_P'].max() - df_fluid['power_P'].min())
+df_fluid['T_norm'] = (df_fluid['time_T'] - df_fluid['time_T'].min()) / \
+                     (df_fluid['time_T'].max() - df_fluid['time_T'].min())
+
+print(f'제약 적용 후 데이터: {len(df_fluid)}개  |  '
+      f'유속 {df_fluid["velocity"].min():.3f}~{df_fluid["velocity"].max():.3f} m/s  |  '
+      f'전력 {df_fluid["power_P"].min():.2f}~{df_fluid["power_P"].max():.2f} W')
+
+# ── MLP 훈련 데이터 생성 (정규화 가중합) ─────────────────
+X_train, y_train = [], []
+for w_time in np.arange(0.0, 1.05, 0.05):
+    cost = w_time * df_fluid['T_norm'] + (1 - w_time) * df_fluid['P_norm']
+    best_v = df_fluid.loc[cost.idxmin(), 'velocity']
+    X_train.append([w_time])
+    y_train.append(best_v)
+X_train = np.array(X_train); y_train = np.array(y_train)
+
+scaler_X = MinMaxScaler()
+X_train_scaled = scaler_X.fit_transform(X_train)
+
+# ── MLP 학습 ──────────────────────────────────────────────
+mlp = MLPRegressor(hidden_layer_sizes=(50, 50), activation='relu',
+                   solver='adam', max_iter=5000, random_state=42, tol=1e-5)
+mlp.fit(X_train_scaled, y_train)
+print(f'\nMLP 학습 완료  |  R² = {mlp.score(X_train_scaled, y_train):.4f}')
+
+# ── 시간대별 시나리오 ─────────────────────────────────────
+# w_time: 동작구 매출건수비율 Min-Max 정규화 (극단값 0/1 → 0.01/0.99 보정)
+# 건수비율(%): 새벽9.9 / 오전18.8 / 낮13.6 / 피크29.0 / 저녁23.9 / 심야4.7
+# [혼잡도 w_time, 전기단가(원/kWh), 운영시간(h)]
+real_scenarios = {
+    '05~09시 (새벽한산)': [0.21,  80, 4],
+    '09~12시 (오전평시)': [0.58, 130, 3],
+    '12~14시 (낮)':       [0.37, 130, 2],
+    '14~18시 (오후피크)': [0.99, 190, 4],
+    '18~23시 (저녁)':     [0.79, 130, 5],
+    '23~05시 (심야정체)': [0.01,  80, 6],
+}
+v_min_data = df_fluid['velocity'].min()
+v_max_data = df_fluid['velocity'].max()
+
+# 현재 유속 전력 — 선형 보간
+P_cur = np.interp(v_current, vv, pp)
+
+# ── AI 추론 + 제약 클리핑 ─────────────────────────────────
+print('\n' + '=' * 72)
+print(f'  동작구 시간대별 AI 최적 제어 유속  (제약: 주유시간 ≤ {T_LIMIT}s)')
+print('=' * 72)
+results = []
+for slot, (w_time, price, dur_h) in real_scenarios.items():
+    pred_v = mlp.predict(scaler_X.transform([[w_time]]))[0]
+    pred_v = np.clip(pred_v, v_min_data, v_max_data)
+    if w_time &gt;= PEAK_THRESHOLD:
+        pred_v = v_current; status = '현재 유지 (피크-속도우선)'
+    elif pred_v &gt;= v_current:
+        pred_v = v_current; status = '현재 유지 (이미 최적)'
+    else:
+        status = f'▼ {v_current - pred_v:.3f} 감소'
+
+    P_opt = np.interp(pred_v, vv, pp)
+    T_opt = V_tank / (pred_v * A_n)
+    dP    = P_cur - P_opt
+    monthly = (dP / 1000) * dur_h * 30 * price
+    results.append({'slot': slot, 'pred_v': pred_v, 'P_opt': P_opt,
+                    'T_opt': T_opt, 'dP': dP, 'monthly': monthly, 'status': status})
+    print(f'\n[{slot}]  혼잡도 {w_time:.2f} | 단가 {price}원')
+    print(f'  AI 제어 유속 : {pred_v:.3f} m/s  ({status})')
+    print(f'  주유시간     : {T_opt:.1f}s  ({"OK" if T_opt &lt;= T_LIMIT else "초과!"})')
+    print(f'  펌프 전력    : {P_opt:.2f}W (현재 {P_cur:.2f}W, 절감 {dP:.2f}W)')
+    print(f'  월간 절감액  : {monthly:,.0f}원')
+
+# ── 요약 테이블 + 경제성 ──────────────────────────────────
+df_result = pd.DataFrame([{
+    '시간대': r['slot'], '제어유속(m/s)': round(r['pred_v'], 3),
+    '주유시간(s)': round(r['T_opt'], 1), '펌프전력(W)': round(r['P_opt'], 2),
+    '전력절감(W)': round(r['dP'], 2), '월간절감(원)': round(r['monthly']),
+    '비고': r['status'],
+} for r in results])
+print('\n' + '=' * 72)
+print(df_result.to_string(index=False))
+total_m = sum(r['monthly'] for r in results); annual = total_m * 12
+print(f'\n  월간 총 절감액 (1개소)        : {total_m:&gt;10,.0f} 원')
+print(f'  연간 총 절감액 (1개소)        : {annual:&gt;10,.0f} 원')
+print(f'  전국 연간 절감액 (×10,489개) : {annual*10489/1e8:&gt;10,.1f} 억원')</code></pre>
+
+<!-- ============ 06 ============ -->
+<h2 id="s06"><span class="n">06</span>결과와 분석</h2>
+
+<h3>6.1 1차 시도: 층류 최대 유속 적용</h3>
+<p>마찰손실을 최소화하려면 층류(Re ≤ 2,100)로 운전하면 된다는 아이디어에서 출발했습니다.</p>
+<div class="eq">u<sub>laminar,max</sub> = 2100 μ / (ρ D) = 2100 × 0.0006 / (702 × 0.017) = 0.106 m/s</div>
+<div class="tw"><table>
+<tr><th>조건</th><th class="r">Re</th><th class="r">u (m/s)</th><th class="r">P<sub>pump</sub> (W)</th><th class="r">50 L 주유시간</th></tr>
+<tr><td>현재 (난류)</td><td class="r">47,437</td><td class="r">2.385</td><td class="r">465.28</td><td class="r">92 s (1.5분)</td></tr>
+<tr><td>층류 최대</td><td class="r">2,100</td><td class="r">0.106</td><td class="r">19.31</td><td class="r">2,086 s (34.8분)</td></tr>
+</table></div>
+<p>전력은 96% 줄지만 주유 한 번에 35분이 걸려 실제 운영이 불가능합니다. 이로부터 <b>전력만이 아니라 시간과의 Trade-off를 함께 최적화해야 한다</b>는 문제 재정의가 나왔습니다.</p>
+
+<h3>6.2 2차 시도: 3개 후보 유속의 가중 비용 비교</h3>
+<p>층류(Re 2,100), 천이(Re 3,000), 천이 최대(Re 4,000)의 세 유속에 대해 시간대별 가중 비용을 비교했습니다.</p>
+<div class="tw"><table>
+<tr><th>시간대</th><th class="r">w</th><th class="r">J 층류</th><th class="r">J 천이</th><th class="r">J 천이최대</th><th>선택</th></tr>
+<tr><td>05 – 09 새벽</td><td class="r">0.21</td><td class="r">0.210</td><td class="r">0.451</td><td class="r">0.790</td><td>층류 0.106</td></tr>
+<tr><td>09 – 12 오전</td><td class="r">0.58</td><td class="r">0.580</td><td class="r">0.413</td><td class="r">0.420</td><td>천이 0.151</td></tr>
+<tr><td>12 – 14 낮</td><td class="r">0.37</td><td class="r">0.370</td><td class="r">0.435</td><td class="r">0.630</td><td>층류 0.106</td></tr>
+<tr><td>14 – 18 피크</td><td class="r">0.99</td><td class="r">0.990</td><td class="r">0.369</td><td class="r">0.010</td><td>천이최대 0.201</td></tr>
+<tr><td>18 – 23 저녁</td><td class="r">0.79</td><td class="r">0.790</td><td class="r">0.390</td><td class="r">0.210</td><td>천이최대 0.201</td></tr>
+<tr><td>23 – 05 심야</td><td class="r">0.01</td><td class="r">0.010</td><td class="r">0.472</td><td class="r">0.990</td><td>층류 0.106</td></tr>
+</table></div>
+<p>세 후보 안에서만 비교하므로 피크 시간대에도 0.201 m/s(18분)가 선택되어 여전히 비현실적이었습니다. 후보를 이산적으로 고르는 방식의 한계를 확인하고, <b>주유시간 상한(10분) 제약 + 연속 유속 범위에서의 최적화</b>로 전환했습니다.</p>
+
+<h3>6.3 최종: MLP 기반 시간대별 제어 유속</h3>
+<div class="tw"><table>
+<tr><th>시간대</th><th class="r">w</th><th class="r">제어 유속 (m/s)</th><th class="r">주유시간 (s)</th><th class="r">펌프 전력 (W)</th><th class="r">절감 (W)</th><th class="r">월 절감 (원)</th><th>비고</th></tr>
+<tr><td>05 – 09 새벽</td><td class="r">0.21</td><td class="r">0.543</td><td class="r">405.6</td><td class="r">99.74</td><td class="r">365.55</td><td class="r">3,509</td><td>감속</td></tr>
+<tr><td>09 – 12 오전</td><td class="r">0.58</td><td class="r">1.242</td><td class="r">177.5</td><td class="r">231.38</td><td class="r">233.90</td><td class="r">2,737</td><td>감속</td></tr>
+<tr><td>12 – 14 낮</td><td class="r">0.37</td><td class="r">0.760</td><td class="r">289.8</td><td class="r">140.08</td><td class="r">325.20</td><td class="r">2,537</td><td>감속</td></tr>
+<tr><td>14 – 18 피크</td><td class="r">0.99</td><td class="r">2.385</td><td class="r">92.4</td><td class="r">465.28</td><td class="r">0</td><td class="r">0</td><td>현재 유지</td></tr>
+<tr><td>18 – 23 저녁</td><td class="r">0.79</td><td class="r">1.884</td><td class="r">116.9</td><td class="r">359.32</td><td class="r">105.96</td><td class="r">2,066</td><td>감속</td></tr>
+<tr><td>23 – 05 심야</td><td class="r">0.01</td><td class="r">0.400</td><td class="r">550.7</td><td class="r">73.32</td><td class="r">391.96</td><td class="r">5,644</td><td>감속 (하한 근처)</td></tr>
+<tr class="hl"><td colspan="6">월간 총 절감 (1개소)</td><td class="r">16,493</td><td></td></tr>
+</table></div>
+<ul>
+<li>w가 클수록(혼잡할수록) 제어 유속이 단조 증가해, 모델이 "혼잡하면 빠르게, 한산하면 느리게"라는 운영 직관을 정량적으로 재현했습니다.</li>
+<li>모든 시간대의 주유시간이 제약(600 s) 이내입니다. 심야는 제약 하한(0.367 m/s) 근처까지 내려갑니다.</li>
+<li>가장 큰 절감은 <b>운영시간이 길고 혼잡도가 가장 낮은 심야(6시간)</b>에서 나왔고, 전기요금이 가장 비싼 피크는 시간 우선이라 절감이 0입니다. 즉 요금이 비싼 시간과 절감이 가능한 시간이 어긋난다는 점이 절감액의 상한을 정합니다.</li>
+</ul>
+
+<h3>6.4 경제성 산정</h3>
+<figure>
+<svg viewBox="0 0 760 300" width="100%" role="img" aria-label="시간대별 월간 전력비 비교 막대그래프" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="12">
+<line x1="60" y1="250" x2="740" y2="250" stroke="#5b6570"/>
+<g fill="#5b6570" text-anchor="end"><text x="52" y="254">0</text><text x="52" y="164">5,000</text><text x="52" y="74">10,000</text></g>
+<g stroke="#e3e7eb"><line x1="60" y1="160" x2="740" y2="160"/><line x1="60" y1="70" x2="740" y2="70"/></g>
+<!-- scale: 10,000원 = 180px -->
+<g>
+<rect x="80" y="169.6" width="36" height="80.4" fill="#c9d3dc"/><rect x="118" y="232.5" width="36" height="17.5" fill="#1f5f8b"/>
+<rect x="190" y="152.0" width="36" height="98.0" fill="#c9d3dc"/><rect x="228" y="201.3" width="36" height="48.7" fill="#1f5f8b"/>
+<rect x="300" y="184.7" width="36" height="65.3" fill="#c9d3dc"/><rect x="338" y="230.3" width="36" height="19.7" fill="#1f5f8b"/>
+<rect x="410" y="59.1" width="36" height="190.9" fill="#c9d3dc"/><rect x="448" y="59.1" width="36" height="190.9" fill="#1f5f8b"/>
+<rect x="520" y="86.7" width="36" height="163.3" fill="#c9d3dc"/><rect x="558" y="124.0" width="36" height="126.0" fill="#1f5f8b"/>
+<rect x="630" y="129.4" width="36" height="120.6" fill="#c9d3dc"/><rect x="668" y="230.4" width="36" height="19.6" fill="#1f5f8b"/>
+</g>
+<g text-anchor="middle" fill="#1d2329">
+<text x="117" y="268">05–09</text><text x="227" y="268">09–12</text><text x="337" y="268">12–14</text><text x="447" y="268">14–18</text><text x="557" y="268">18–23</text><text x="667" y="268">23–05</text>
+</g>
+<rect x="470" y="14" width="12" height="12" fill="#c9d3dc"/><text x="488" y="24">현재 정속</text>
+<rect x="570" y="14" width="12" height="12" fill="#1f5f8b"/><text x="588" y="24">MLP 제어</text>
+<text x="60" y="290" fill="#5b6570">월간 펌프 전력비 (원) · 1개소 · 4대 동시 운전 기준</text>
+</svg>
+<figcaption>그림 2. 시간대별 월간 펌프 전력비. 현재 = 465.28 W × 운영시간 × 30일 × 요금.</figcaption>
+</figure>
+<div class="tw"><table>
+<tr><th>시간대</th><th class="r">운영시간 (h)</th><th class="r">요금 (원/kWh)</th><th class="r">현재 월 요금</th><th class="r">제어 후 월 요금</th></tr>
+<tr><td>05 – 09</td><td class="r">4</td><td class="r">80</td><td class="r">4,467</td><td class="r">958</td></tr>
+<tr><td>09 – 12</td><td class="r">3</td><td class="r">130</td><td class="r">5,444</td><td class="r">2,707</td></tr>
+<tr><td>12 – 14</td><td class="r">2</td><td class="r">130</td><td class="r">3,629</td><td class="r">1,093</td></tr>
+<tr><td>14 – 18</td><td class="r">4</td><td class="r">190</td><td class="r">10,608</td><td class="r">10,608</td></tr>
+<tr><td>18 – 23</td><td class="r">5</td><td class="r">130</td><td class="r">9,073</td><td class="r">7,007</td></tr>
+<tr><td>23 – 05</td><td class="r">6</td><td class="r">80</td><td class="r">6,700</td><td class="r">1,056</td></tr>
+<tr class="hl"><td colspan="3">합계 (월)</td><td class="r">39,921</td><td class="r">23,428 (−41.3%)</td></tr>
+</table></div>
+<div class="eq">연간 절감 (1개소) = 16,493 × 12 ≈ 197,900원 &nbsp;&nbsp;|&nbsp;&nbsp; 전국 (10,489개소) ≈ 20.8억원/년</div>
+<p class="note">전기요금은 시간대별 차등 단가(경부하 80, 중간부하 130, 최대부하 190원/kWh)를 단순화해 적용했고, 월 30일 기준입니다.</p>
+
+<!-- ============ 07 ============ -->
+<h2 id="s07"><span class="n">07</span>결론</h2>
+<ol>
+<li><b>주유소 펌프 전력의 대부분은 노즐 구간의 마찰손실이다.</b> 2″ 매설관과 17 mm 노즐의 D⁵ 차이 때문에 펌프 일의 약 84%가 노즐·호스 구간에서 소산되며, 위치수두(1.1 m)는 9% 수준입니다. 따라서 유속 조절의 효과가 큽니다.</li>
+<li><b>전력만 최소화하면 운영이 불가능하다.</b> 층류 최대 유속은 전력을 96% 줄이지만 주유시간이 35분이 됩니다. 시간–전력 가중 비용과 10분 주유시간 제약을 함께 둔 최적화가 필요했습니다.</li>
+<li><b>MLP 제어로 월 펌프 전력비를 41% 절감했다.</b> 혼잡도에 따라 0.40 – 2.385 m/s로 유속을 바꾸면 1개소 기준 연 약 19.8만원, 전국 확장 시 연 약 20.8억원 규모의 전력비를 절감할 수 있습니다.</li>
+<li><b>단일 매장의 절감액은 작고, 가치는 규모에서 나온다.</b> 가변속 펌프(VFD) 교체 비용을 고려하면 1개소 단독 투자 회수는 어렵고, 프랜차이즈 단위 일괄 적용이나 신설·교체 시점 도입이 현실적입니다.</li>
+</ol>
+
+<!-- ============ 08 ============ -->
+<h2 id="s08"><span class="n">08</span>한계와 향후 과제</h2>
+<div class="tw"><table>
+<tr><th>한계</th><th>영향</th><th>향후 과제</th></tr>
+<tr><td><b>병렬 분기 손실의 합산.</b> 최종 계산은 노즐·Pipe D·급축소 손실을 4개 분기만큼 더했음</td><td>단위 질량당 에너지 수지에서 병렬 분기는 하나의 경로만 따라가야 하므로 펌프 일이 보수적으로 과대평가됨 (최원거리 단일 경로, η = 0.8 기준 84.5 W)</td><td>노드 연속식 + 경로별 에너지 수지로 엄밀히 재계산하고, 펌프 곡선과 교점(운전점)을 구함</td></tr>
+<tr><td><b>펌프 효율 가정.</b> 초안은 η = 0.8, 최종 계산은 η = 0.4</td><td>전력 절대값이 2배 달라짐 (절감 비율은 동일)</td><td>실제 STP 모델의 효율 곡선(유량별 η) 적용</td></tr>
+<tr><td>부차손실 일부만 반영 (급축소만)</td><td>엘보·밸브·필터·계량기·브레이크어웨이 손실 누락으로 양정 과소평가</td><td>피팅 목록 작성 후 K 값 또는 등가길이로 추가</td></tr>
+<tr><td>천이 영역(Re 2,100 – 4,000)에 난류식 적용</td><td>저유속 구간 마찰계수 불확실</td><td>천이 영역 보간식 적용 또는 해당 구간 운전 회피</td></tr>
+<tr><td><b>MLP 입력이 1차원, 학습 데이터 21개</b></td><td>사실상 1차원 보간기로 동작하며, 직접 argmin이나 선형 보간으로도 같은 결과를 얻을 수 있음</td><td>요일·날씨·대기 차량 수·실시간 요금 등 다변수 입력으로 확장해 MLP의 필요성을 확보, 검증 데이터 분리</td></tr>
+<tr><td>정속 펌프 → 가변속 펌프 교체 필요</td><td>설비 투자비 미반영</td><td>VFD 투자비와 회수기간(Payback) 분석</td></tr>
+<tr><td>주유소 회전율·고객 대기 미반영</td><td>감속 시 매출 손실 가능성</td><td>대기행렬(Queueing) 모델로 매출 영향 정량화</td></tr>
+<tr><td>시간대 가중치를 한 지역(서울 동작구)에서 가져와 전국에 선형 확장</td><td>지역별 수요 패턴·규모 차이 미반영</td><td>지역별 데이터로 가중치 재산정, 주유소 규모별 분류</td></tr>
+</table></div>
+
+<!-- ============ 09 ============ -->
+<h2 id="s09"><span class="n">09</span>트러블슈팅 기록</h2>
+<div class="tw"><table>
+<tr><th>증상</th><th>원인</th><th>해결</th></tr>
+<tr><td>계획서의 부차손실 식 ℱ = K u²와 Total Head 식의 차원이 맞지 않음</td><td>Fanning 기준 비질량 에너지(J/kg) 식에서 속도수두 ½이 누락</td><td>모든 손실을 J/kg 기준으로 통일하고 ℱ<sub>minor</sub> = K u²/2로 수정. 마찰계수는 교재와 같은 Fanning으로 통일</td></tr>
+<tr><td>교재 예제는 피팅을 등가길이로, 계획서는 K로 처리</td><td>두 방식을 섞으면 이중 계산</td><td>K-factor 방식으로 통일 (1차: 급축소만)</td></tr>
+<tr><td>모든 배관을 17 mm로 두면 주배관 유속 9.5 m/s, Re 19만</td><td>공유 배관이 합쳐진 유량을 나르는데 직경을 노즐과 같게 가정</td><td>현장 자문으로 매설관 2″(50.8 mm) 확인 → Pipe A 유속 1.07 m/s로 현실화</td></tr>
+<tr><td>디스펜서 1대 기준 계산(27.9 W)이 실제 운전과 다름</td><td>동시 운전 대수 가정 변경 (1대 → 4대)</td><td>구간별 유량배수(4/2/1/1) 열을 가진 표 구조로 계산기 재작성</td></tr>
+<tr><td>순 양정을 3.0 m로 계산</td><td>토출 종점을 디스펜서 상단(+2.4 m)으로 가정</td><td>K5 제원 주유구 높이(+0.5 m) 적용 → Δz = 1.1 m</td></tr>
+<tr><td>계산기를 수정했는데 유속 스윕 표의 전력이 그대로</td><td>계산기의 일부 손실 셀을 상수(×4 값)로 덮어써 스윕 수식과 로직이 달라짐</td><td>스윕 시트를 계산기와 같은 로직(분기 ×4)으로 재작성, 상수는 계산기 셀 절대참조</td></tr>
+<tr><td>층류 최대 유속에서 주유시간 34.8분</td><td>전력만 목적함수로 둠</td><td>시간–전력 가중 비용함수와 10분 주유시간 제약 도입</td></tr>
+<tr><td>3개 후보 비교 시 피크에도 0.201 m/s(18분) 선택</td><td>후보 유속이 이산적이고 모두 저유속</td><td>스윕 전체(연속 범위)에서 최적화하고 MLP로 연속 추론</td></tr>
+<tr><td>시간대 가중치가 0 또는 1이 되어 한 목적을 완전히 무시</td><td>Min-Max 정규화의 극단값</td><td>최소 1% 보장 매핑: 0 → 0.01, 1 → 0.99</td></tr>
+<tr><td>일부 w에서 MLP 예측이 현재 유속보다 크거나 범위를 벗어남</td><td>회귀 모델의 외삽, 피크의 학습 정답이 데이터 상한</td><td>데이터 범위 클리핑, w ≥ 0.95이거나 예측 ≥ 현재 유속이면 현재 유속 유지</td></tr>
+<tr><td>np.interp 결과가 비정상</td><td>보간 기준 배열이 오름차순이 아님</td><td>sort_values('velocity') 후 배열 생성</td></tr>
+</table></div>
+
+<!-- ============ 10 ============ -->
+<h2 id="s10"><span class="n">10</span>재현 방법</h2>
+<ol>
+<li>엑셀 계산기의 <code>펌프동력 계산기</code> 시트에서 입력값(밀도·점도·직경·길이·Δz·η)을 확인합니다. 노란 셀(노즐 유속)을 바꾸면 전력이 즉시 재계산됩니다.</li>
+<li><code>유속 스윕</code> 시트에서 0.05 – 2.40 m/s의 전력 표와 그래프를 확인합니다. 계산기 상수를 바꾸면 스윕도 자동 갱신됩니다.</li>
+<li>Google Colab에서 05의 Python 코드를 실행하고, 엑셀 파일을 업로드합니다 (시트명 <code>유속 스윕</code>, 열 이름 <code>노즐유속 u_n</code>, <code>P (W)</code> 필요).</li>
+<li>출력되는 시간대별 제어 유속·전력·월간 절감액과 연간·전국 절감액을 확인합니다. <code>T_LIMIT</code>, <code>PEAK_THRESHOLD</code>, 시나리오의 요금·운영시간을 바꿔 민감도를 볼 수 있습니다.</li>
+</ol>
+
+<h4>참고문헌</h4>
+<ol>
+<li>J. O. Wilkes, <i>Fluid Mechanics for Chemical Engineers</i>, 2nd ed., Prentice Hall, 2006.</li>
+<li>Veeder-Root Company, <i>Improving Pump Performance to Increase Profitability of Retail Fuel Sales</i>, White Paper, 2004.</li>
+<li>Government of Saskatchewan, <i>Requirements for Underground Petroleum Storage Tank Systems</i>, 2016.</li>
+<li>National Institute for Storage Tank Management, <i>USTs and UST System Components</i>, 2015.</li>
+<li>대한LPG협회, 정책정보 — 수송용 연료 물성 비교표, 2004.</li>
+<li>MST(주) 위험물 사업부, <i>HDPE Piping System</i>, 2018.</li>
+<li>중소벤처기업부, 소상공인365 상권 분석 데이터, 2025.</li>
+<li>scikit-learn, <i>MLPRegressor</i> documentation.</li>
+</ol>
+
+<p style="margin-top:36px"><a class="back" href="projects.html#fluid-pump">← Back to Projects</a></p>
+</main>
+<footer>Junha Kim · Soongsil University 2026</footer>
+</body>
+</html>
