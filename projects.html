@@ -446,31 +446,49 @@
     </p>
   </section>
 
-  <!-- ============ 4. ML on process data ============ -->
-  <section class="project">
+  <!-- ============ 4. ML on process data: CMP virtual metrology ============ -->
+  <section class="project" id="cmp-vm">
     <div class="project-top">
-      <p class="kicker">Machine Learning · Coursework Project</p>
-      <span class="status live">In progress · 2026-2</span>
+      <p class="kicker">Machine Learning · Virtual Metrology · CMP</p>
+      <span class="status live">Completed · 2026-11</span>
     </div>
 
     <h2>
-      Machine Learning on Semiconductor Process Data
-      <span class="ko">반도체 공정 데이터 기반 머신러닝 프로젝트</span>
+      Data-Driven Virtual Metrology for CMP Removal Rate
+      <span class="ko">센서 데이터 기반 CMP 연마율(MRR) 가상 계측과 Run-to-Run 보정</span>
     </h2>
 
     <p class="lead">
-      A course project undertaken alongside Machine Learning in the School of Electronic
-      Engineering at Soongsil University, applying data-driven methods to semiconductor
-      process data.
+      Predicting the per-wafer material removal rate of a production CMP tool from its sensor logs
+      (PHM 2016 Data Challenge, ~970k rows) and interpreting each finding through CMP physics.
+      Summarizing only the polishing window (STAGE_ROTATION&nbsp;&gt;&nbsp;0) and separating the three
+      process groups exposed a Simpson&rsquo;s paradox and a dresser-life saw-tooth in MRR, i.e. the
+      Preston coefficient k<sub>p</sub> decaying with conditioner wear. Usage counters that act as time
+      proxies were dropped after forward-chaining validation, and an EWMA run-to-run bias correction
+      was simulated on the following 20 days.
     </p>
 
     <ul class="meta">
-      <li><span class="k">Type</span><span class="v">Coursework project</span></li>
-      <li><span class="k">Term</span><span class="v">2026 Fall semester</span></li>
-      <li><span class="k">Focus</span><span class="v">Semiconductor process data analysis</span></li>
+      <li><span class="k">Type</span><span class="v">Individual coursework project, Machine Learning (2026 Fall)</span></li>
+      <li><span class="k">Data</span><span class="v">PHM Society 2016 CMP data &middot; 2,825 wafer&ndash;stage samples &middot; 25 sensor columns &middot; 3 process groups</span></li>
+      <li><span class="k">Model</span><span class="v">scikit-learn Pipeline (ColumnTransformer + RandomForest) &middot; GridSearchCV on TimeSeriesSplit &middot; bootstrap CI &middot; EWMA run-to-run</span></li>
+      <li><span class="k">Result</span><span class="v">Sealed test RMSE 5.45 vs 7.18 for the group-mean baseline (&minus;24%, 95% CI 5.05&ndash;5.90). With only 1 in 5 wafers measured, EWMA correction cut future-period error by 14% (6.15 &rarr; 5.32)</span></li>
+      <li><span class="k">Finding</span><span class="v">Preston&rsquo;s P&middot;V terms added nothing because the recipe fixes V; consumable state (k<sub>p</sub>) drove MRR, and retainer-ring and centre-zone pressure ranked top among sensors</span></li>
+      <li><span class="k">Caveat</span><span class="v">MRR units and film type are undisclosed; train, validation and test share the same 65-day period, so future performance is reported separately (TimeSeriesSplit RMSE 5.79)</span></li>
     </ul>
 
-    <p class="pending">Dataset, approach and results — To be updated</p>
+    <ul class="tools">
+      <li>Python</li>
+      <li>pandas</li>
+      <li>NumPy</li>
+      <li>scikit-learn</li>
+      <li>SciPy</li>
+      <li>matplotlib</li>
+    </ul>
+
+    <p class="lead">
+      <a class="btn-link" href="cmp-virtual-metrology.html" target="_blank" rel="noopener">View full write-up (한국어) <span aria-hidden="true">↗</span><span class="sr-only">(opens in a new tab)</span></a>
+    </p>
   </section>
 
   <!-- ============ 5. Fugacity Calculator ============ -->
