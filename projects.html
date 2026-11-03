@@ -450,7 +450,7 @@
   <section class="project" id="cmp-vm">
     <div class="project-top">
       <p class="kicker">Machine Learning · Virtual Metrology · CMP</p>
-      <span class="status live">Completed · 2026-11</span>
+      <span class="status live">Updated · 2026-11 (v2)</span>
     </div>
 
     <h2>
@@ -465,14 +465,16 @@
       process groups exposed a Simpson&rsquo;s paradox and a dresser-life saw-tooth in MRR, i.e. the
       Preston coefficient k<sub>p</sub> decaying with conditioner wear. Usage counters that act as time
       proxies were dropped after forward-chaining validation, and an EWMA run-to-run bias correction
-      was simulated on the following 20 days.
+      was simulated on the following 20 days. v2 adds FDC step-wise features, grouped permutation
+      importance on future folds, a metrology-delay study against a measurement-only EWMA baseline,
+      and a residual EWMA chart for model aging.
     </p>
 
     <ul class="meta">
       <li><span class="k">Type</span><span class="v">Individual coursework project, Machine Learning (2026 Fall)</span></li>
       <li><span class="k">Data</span><span class="v">PHM Society 2016 CMP data &middot; 2,825 wafer&ndash;stage samples &middot; 25 sensor columns &middot; 3 process groups</span></li>
       <li><span class="k">Model</span><span class="v">scikit-learn Pipeline (ColumnTransformer + RandomForest) &middot; GridSearchCV on TimeSeriesSplit &middot; bootstrap CI &middot; EWMA run-to-run</span></li>
-      <li><span class="k">Result</span><span class="v">Sealed test RMSE 5.45 vs 7.18 for the group-mean baseline (&minus;24%, 95% CI 5.05&ndash;5.90). With only 1 in 5 wafers measured, EWMA correction cut future-period error by 14% (6.15 &rarr; 5.32)</span></li>
+      <li><span class="k">Result</span><span class="v">Sealed test RMSE 5.33 vs 7.18 for the group-mean baseline (&minus;26%, 95% CI 4.94&ndash;5.78). With 1 wafer per lot measured and a 1.6-day metrology delay, a hybrid VM&nbsp;+&nbsp;EWMA run-to-run scheme halved the removal-amount error of fixed-time polishing (13.0% &rarr; 7.0% RMS)</span></li>
       <li><span class="k">Finding</span><span class="v">Preston&rsquo;s P&middot;V terms added nothing because the recipe fixes V; consumable state (k<sub>p</sub>) drove MRR, and retainer-ring and centre-zone pressure ranked top among sensors</span></li>
       <li><span class="k">Caveat</span><span class="v">MRR units and film type are undisclosed; train, validation and test share the same 65-day period, so future performance is reported separately (TimeSeriesSplit RMSE 5.79)</span></li>
     </ul>
